@@ -465,7 +465,7 @@
 </div>
 
 
-  <div class="cat-bar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;padding:0 16px;">
     <button class="btn btn-sm active" data-cat="all">📂 全部</button>
     <button class="btn btn-sm" data-cat="锅炉">🔥 锅炉</button>
     <button class="btn btn-sm" data-cat="汽机">⚙️ 汽机</button>
@@ -480,13 +480,7 @@
 
   <!-- Browse mode toolbar -->
   <div id="browseToolbar" class="toolbar">
-    
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
-    <button class="btn active" data-cat="all">📂 全部（2189题）</button>
-    <button class="btn" data-cat="锅炉">🔥 锅炉（815题）</button>
-    <button class="btn" data-cat="汽机">⚙️ 汽机（1016题）</button>
-    <button class="btn" data-cat="电气">⚡ 电气（358题）</button>
-  </div><div class="filter-group">
+    <div class="filter-group">
       <button class="btn active" data-filter="all">全部</button>
       <button class="btn" data-filter="单选">单选</button>
       <button class="btn" data-filter="判断">判断</button>
@@ -547,7 +541,7 @@
   <div id="loadingIndicator" style="text-align:center;padding:60px 20px;color:var(--text-secondary);">
   <div style="font-size:40px;margin-bottom:16px;">📚</div>
   <div>正在加载题库...</div>
-  <div style="font-size:13px;margin-top:8px;">共 2189 道题（锅炉815 / 汽机1016 / 电气358）</div>
+  <div style="font-size:13px;margin-top:8px;">🔥锅炉815 / ⚙️汽机1016 / ⚡电气358</div>
 </div>
 <div id="questionArea"></div>
 
@@ -593,46 +587,6 @@ function filterByCategory() {
   renderQuestion();
   updateStats();
 }
-
-// Category filter
-let currentCategory = 'all';
-
-function getFilteredQuestions() {
-  if (currentCategory === 'all') return allQuestions;
-  return allQuestions.filter(q => q.category === currentCategory);
-}
-
-// Override applyFilter to respect category
-const origApplyFilter = applyFilter;
-applyFilter = function() {
-  const type = currentFilter;
-  let pool = getFilteredQuestions();
-  if (type !== 'all') {
-    pool = pool.filter(q => q.type === type);
-  }
-  currentQuestions = pool;
-  currentIndex = 0;
-  renderQuestion();
-  updateStats();
-};
-
-// Update stats to show category info
-const origUpdateStats = updateStats;
-updateStats = function() {
-  origUpdateStats();
-  // Update header with category info
-  const filtered = getFilteredQuestions();
-  document.getElementById('statTotal').textContent = filtered.length;
-  const answered = Object.keys(answeredMap).length;
-  // Also update total count
-  document.getElementById('totalCount').textContent = allQuestions.length;
-};
-
-// Override renderQuestion header to show category
-const origRender = renderQuestion;
-renderQuestion = function() {
-  origRender();
-};
 
 // ============ Init ============
 function initApp() {
@@ -939,7 +893,8 @@ function showCurrentAnswer() {
 
 // ============ Stats ============
 function updateStats() {
-  const total = allQuestions.length;
+  const filtered = currentCategory === 'all' ? allQuestions : allQuestions.filter(q => q.category === currentCategory);
+  const total = filtered.length;
   const answered = Object.keys(answeredMap).length;
   const correct = Object.values(answeredMap).filter(v => v.correct).length;
   const wrong = answered - correct;
@@ -951,7 +906,7 @@ function updateStats() {
   document.getElementById('wrongCount').textContent = wrong;
   document.getElementById('accuracy').textContent = acc + '%';
 
-  document.getElementById('statTotal').textContent = currentCategory === 'all' ? allQuestions.length : allQuestions.filter(q => q.category === currentCategory).length;
+  document.getElementById('statTotal').textContent = total;
   document.getElementById('statAnswered').textContent = answered;
   document.getElementById('statCorrect').textContent = correct;
   document.getElementById('statWrong').textContent = wrong;
@@ -998,7 +953,7 @@ function switchMode(mode) {
   document.getElementById('testConfig').style.display = mode === 'test' ? 'block' : 'none';
 
   if (mode === 'browse') {
-    filterByCategory();
+    applyFilter();
   } else if (mode === 'test') {
     testQuestions = [];
     document.getElementById('questionArea').innerHTML =
@@ -1063,21 +1018,6 @@ function startTest() {
   }
 
   count = Math.min(count, pool.length);
-
-  
-  // Category filter buttons
-  document.querySelectorAll('[data-cat]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-cat]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentCategory = btn.dataset.cat;
-      filterByCategory();
-      // Update total display
-      const total = currentCategory === 'all' ? allQuestions.length : allQuestions.filter(q => q.category === currentCategory).length;
-      document.getElementById('statTotal').textContent = currentCategory === 'all' ? allQuestions.length : allQuestions.filter(q => q.category === currentCategory).length;
-    });
-  });
-
 
   // Shuffle and pick
   shuffleArray(pool);
@@ -1145,7 +1085,17 @@ document.addEventListener('DOMContentLoaded', () => {
     tab.addEventListener('click', () => switchMode(tab.dataset.mode));
   });
 
-  // Filter buttons
+  // Category filter buttons
+  document.querySelectorAll('[data-cat]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-cat]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentCategory = btn.dataset.cat;
+      filterByCategory();
+    });
+  });
+
+  // Filter buttons (category-aware)
   document.querySelectorAll('[data-filter]').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
@@ -1191,21 +1141,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  
-  // Category filter buttons
-  document.querySelectorAll('[data-cat]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-cat]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentCategory = btn.dataset.cat;
-      filterByCategory();
-      // Update total display
-      const total = currentCategory === 'all' ? allQuestions.length : allQuestions.filter(q => q.category === currentCategory).length;
-      document.getElementById('statTotal').textContent = currentCategory === 'all' ? allQuestions.length : allQuestions.filter(q => q.category === currentCategory).length;
-    });
-  });
-
-
   // Shuffle
   document.getElementById('shuffleBtn').addEventListener('click', shuffleQuestions);
 
@@ -1214,26 +1149,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Start test
   document.getElementById('startTestBtn').addEventListener('click', startTest);
-
-    // Add category awareness to wrong mode
-  const origSwitch = switchMode;
-  switchMode = function(mode) {
-    if (mode === "wrong") {
-      const wrongQuestions = allQuestions.filter((q, i) => wrongSet.has(i));
-      if (wrongQuestions.length === 0) {
-        document.getElementById("questionArea").innerHTML =
-          `<div class="no-questions">🎉 没有错题！继续保持！</div>`;
-        document.querySelector(".nav-buttons").style.display = "none";
-        return;
-      }
-      currentQuestions = wrongQuestions;
-      currentIndex = 0;
-      renderQuestion();
-      updateStats();
-      return;
-    }
-    origSwitch(mode);
-  };
 
   // Wrong questions button
   document.getElementById('wrongBtn').addEventListener('click', () => {
@@ -1245,21 +1160,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('testConfig').style.display = 'none';
   });
 
-  
-  // Category buttons
-  document.querySelectorAll('[data-cat]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-cat]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentCategory = btn.dataset.cat;
-      // Update stats for category
-      filterByCategory();
-      // Update loading indicator
-      const filtered = getFilteredQuestions();
-      document.getElementById('statTotal').textContent = filtered.length;
-    });
-  });
-
   // Reset progress
   document.getElementById('resetProgressBtn').addEventListener('click', resetProgress);
 
@@ -1269,21 +1169,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   window.addEventListener('scroll', () => {
     document.getElementById('scrollTop').classList.toggle('show', window.scrollY > 300);
-  });
-
-  
-  // Category buttons
-  document.querySelectorAll('[data-cat]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-cat]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentCategory = btn.dataset.cat;
-      // Update stats for category
-      filterByCategory();
-      // Update loading indicator
-      const filtered = getFilteredQuestions();
-      document.getElementById('statTotal').textContent = filtered.length;
-    });
   });
 
   // Reset progress via keyboard: hold Shift + click on header
