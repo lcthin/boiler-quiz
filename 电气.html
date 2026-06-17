@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#4f6ef7">
+<link rel="manifest" href="/manifest.json">
+<title>电气题库刷题系统</title>
+<style>
+  :root {
+    --primary: #4f6ef7;
+    --primary-hover: #3b56d9;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .app-header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .app-header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .app-header h1 small {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-secondary);
+  }
+  .header-stats {
+    display: flex;
+    gap: 20px;
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+  }
+  .header-stats span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .header-stats .num { font-weight: 600; color: var(--text); }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 20px 16px 80px;
+  }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+  }
+  .toolbar .filter-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    color: var(--text);
+  }
+  .btn:hover { background: #f8fafc; }
+  .btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .btn.active:hover { background: var(--primary-hover); }
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-success {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+  }
+  .btn-danger {
+    background: var(--danger);
+    color: white;
+    border-color: var(--danger);
+  }
+  .btn-warning {
+    background: var(--warning);
+    color: white;
+    border-color: var(--warning);
+  }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-outline {
+    background: transparent;
+    color: var(--primary);
+    border-color: var(--primary);
+  }
+  .btn-outline:hover { background: var(--primary); color: white; }
+
+  .toolbar-right {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .progress-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #818cf8);
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  /* Question card */
+  .question-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    margin-bottom: 16px;
+    transition: box-shadow 0.2s;
+  }
+  .question-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .q-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .q-number {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-secondary);
+    min-width: 36px;
+  }
+  .q-type {
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .q-type.single { background: #dbeafe; color: #1d4ed8; }
+  .q-type.multi { background: #fce7f3; color: #be185d; }
+  .q-type.judge { background: #dcfce7; color: #15803d; }
+  .q-status {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .q-status.correct { color: var(--success); }
+  .q-status.wrong { color: var(--danger); }
+  .q-status.pending { color: var(--text-secondary); }
+
+  .q-text {
+    font-size: 16px;
+    line-height: 1.7;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  /* Options */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .option:hover { border-color: #a5b4fc; background: #f8faff; }
+  .option.selected { border-color: var(--primary); background: #eef2ff; }
+  .option.correct-answer { border-color: var(--success); background: #f0fdf4; }
+  .option.wrong-answer { border-color: var(--danger); background: #fef2f2; }
+  .option.revealed { cursor: default; }
+  .option .letter {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .option.selected .letter { background: var(--primary); color: white; }
+  .option.correct-answer .letter { background: var(--success); color: white; }
+  .option.wrong-answer .letter { background: var(--danger); color: white; }
+
+  /* Feedback */
+  .feedback {
+    margin-top: 16px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.right { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+  .feedback.wrong { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+  .feedback .fb-icon { font-weight: 700; font-size: 16px; }
+
+  /* Navigation */
+  .nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .nav-buttons .btn { min-width: 100px; justify-content: center; display: flex; align-items: center; gap: 6px; }
+
+  /* Stats panel */
+  .stats-panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .stat-card .stat-value {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .stat-card .stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+  .stat-card .stat-value.blue { color: var(--primary); }
+  .stat-card .stat-value.green { color: var(--success); }
+  .stat-card .stat-value.red { color: var(--danger); }
+  .stat-card .stat-value.yellow { color: var(--warning); }
+
+  /* Tab modes */
+  .mode-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    background: var(--card);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .mode-tab {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+  }
+  .mode-tab:not(:last-child) { border-right: 1px solid var(--border); }
+  .mode-tab:hover { background: #f8fafc; }
+  .mode-tab.active {
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+  }
+
+  /* Test mode */
+  .test-config {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .test-config h3 { margin-bottom: 16px; font-size: 16px; }
+  .test-config .form-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .test-config .form-row label {
+    font-size: 14px;
+    color: var(--text-secondary);
+    min-width: 80px;
+  }
+  .test-config select, .test-config input {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--card);
+  }
+  .test-config input { width: 80px; }
+
+  .no-questions {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+    font-size: 16px;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .container { padding: 10px 8px 80px; }
+    .app-header { padding: 12px 14px; }
+    .app-header h1 { font-size: 17px; }
+    .header-stats { gap: 10px; font-size: 12px; }
+    .question-card { padding: 14px; border-radius: 10px; }
+    .q-text { font-size: 15px; margin-bottom: 14px; }
+    .option { padding: 11px 12px; font-size: 14px; border-radius: 8px; gap: 10px; }
+    .option .letter { width: 24px; height: 24px; font-size: 12px; min-width: 24px; }
+    .toolbar { flex-direction: column; align-items: stretch; gap: 8px; }
+    .toolbar-right { margin-left: 0; }
+    .filter-group { justify-content: center; }
+    .btn { padding: 8px 12px; font-size: 12px; }
+    .nav-buttons { gap: 8px; }
+    .nav-buttons .btn { min-width: 0; flex: 1; font-size: 13px; padding: 10px 8px; }
+    .stats-panel { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat-card { padding: 12px 8px; }
+    .stat-card .stat-value { font-size: 22px; }
+    .stat-card .stat-label { font-size: 11px; }
+    .mode-tab { font-size: 13px; padding: 10px 6px; }
+    .test-config { padding: 16px; }
+    .test-config .form-row { flex-direction: column; align-items: stretch; gap: 8px; }
+    .feedback { font-size: 13px; padding: 10px 14px; }
+    .wrong-toggle { bottom: 14px; left: 14px; }
+    .scroll-top { bottom: 14px; right: 14px; width: 38px; height: 38px; }
+    .q-number { font-size: 12px; min-width: 28px; }
+    .q-status { font-size: 11px; }
+    .q-type { font-size: 10px; padding: 1px 8px; }
+    [data-filter] { flex: 1; text-align: center; }
+  }
+
+  @media (max-width: 400px) {
+    .app-header h1 { font-size: 15px; }
+    .header-stats { gap: 6px; font-size: 11px; }
+    .q-text { font-size: 14px; }
+    .option { padding: 10px 10px; font-size: 13px; }
+    .btn { padding: 7px 10px; font-size: 11px; }
+    .stats-panel { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .stat-card .stat-value { font-size: 18px; }
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .question-card { animation: fadeIn 0.25s ease; }
+
+  /* Scroll to top button */
+  .scroll-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    z-index: 50;
+  }
+  .scroll-top.show { display: flex; }
+  .scroll-top:hover { background: #f8fafc; }
+
+  /* Wrong questions panel */
+  .wrong-toggle {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 50;
+  }
+  .wrong-toggle .btn {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .wrong-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--danger);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    margin-left: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>📚 电气题库刷题系统 <small>v1.0</small></h1>
+  <div class="header-stats">
+    <span>总题数: <span class="num" id="totalCount">0</span></span>
+    <span>已答: <span class="num" id="answeredCount">0</span></span>
+    <span>正确: <span class="num" id="correctCount" style="color:var(--success)">0</span></span>
+    <span>错误: <span class="num" id="wrongCount" style="color:var(--danger)">0</span></span>
+    <span>正确率: <span class="num" id="accuracy">0%</span></span>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Mode tabs -->
+  <div class="mode-tabs" id="modeTabs">
+    <button class="mode-tab active" data-mode="browse">📖 刷题模式</button>
+    <button class="mode-tab" data-mode="test">📝 考试模式</button>
+    <button class="mode-tab" data-mode="wrong">❌ 错题集</button>
+  </div>
+
+  <!-- Browse mode toolbar -->
+  <div id="browseToolbar" class="toolbar">
+    <div class="filter-group">
+      <button class="btn active" data-filter="all">全部</button>
+      <button class="btn" data-filter="单选">单选</button>
+      <button class="btn" data-filter="判断">判断</button>
+      <button class="btn" data-filter="多选">多选</button>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn btn-sm" id="shuffleBtn">🔀 随机</button>
+      <button class="btn btn-sm btn-primary" id="showAnswerBtn">👁 显示答案</button>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+    <button class="btn btn-sm" id="resetProgressBtn" style="color:var(--text-secondary);font-size:11px;border-color:transparent;">🗑 清除答题记录</button>
+  </div>
+
+  <!-- Test mode config -->
+  <div id="testConfig" class="test-config" style="display:none;">
+    <h3>考试模式设置</h3>
+    <div class="form-row">
+      <label>题目类型</label>
+      <select id="testType">
+        <option value="all">全部</option>
+        <option value="单选">单选</option>
+        <option value="判断">判断</option>
+        <option value="多选">多选</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>题目数量</label>
+      <input type="number" id="testCount" value="20" min="1" max="200">
+      <button class="btn btn-success" id="startTestBtn">开始考试</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-panel" id="statsPanel">
+    <div class="stat-card">
+      <div class="stat-value blue" id="statTotal">0</div>
+      <div class="stat-label">总题数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value blue" id="statAnswered">0</div>
+      <div class="stat-label">已答题</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value green" id="statCorrect">0</div>
+      <div class="stat-label">正确</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value red" id="statWrong">0</div>
+      <div class="stat-label">错误</div>
+    </div>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress-bar"><div class="fill" id="progressFill" style="width:0%"></div></div>
+
+  <!-- Question area -->
+  <div id="loadingIndicator" style="text-align:center;padding:60px 20px;color:var(--text-secondary);">
+  <div style="font-size:40px;margin-bottom:16px;">📚</div>
+  <div>正在加载题库...</div>
+  <div style="font-size:13px;margin-top:8px;">共 358 道题（单选178 / 判断135 / 多选45）</div>
+</div>
+<div id="questionArea"></div>
+
+  <!-- Navigation -->
+  <div class="nav-buttons">
+    <button class="btn" id="prevBtn">← 上一题</button>
+    <button class="btn" id="nextBtn">下一题 →</button>
+  </div>
+</div>
+
+<!-- Wrong questions floating button -->
+<div class="wrong-toggle" id="wrongToggleBtn" style="display:none;">
+  <button class="btn btn-danger btn-sm" id="wrongBtn">❌ 错题 <span class="wrong-badge" id="wrongBadge">0</span></button>
+</div>
+
+<button class="scroll-top" id="scrollTop">↑</button>
+
+<script>
+// ============ Load Questions ============
+let allQuestions = [];
+let currentQuestions = [];
+let currentIndex = 0;
+let currentMode = 'browse';
+let testQuestions = [];
+let answeredMap = {}; // { index_in_allQuestions: { selected, correct } }
+let wrongSet = new Set(); // indices of wrong answers
+
+async function loadQuestions() {
+  allQuestions = {"total":358,"questions":[{"num":1,"type":"单选","question":"冬季运行方式氢气露点控制在（）℃。","options":{"A":"-25~-40","B":"-30~-40","C":"-5~-25","D":"-40~-60"},"answer":"A"},{"num":2,"type":"单选","question":"发电机失磁后在30s内将负荷减至0.6标么值；在90s内减至0.4标么值。定、转子电流 不大于1.01.1标么值，允许失磁运行时间不超过15min。（）","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":3,"type":"判断","question":"在密集敷设电缆的主控制室下电缆夹层和电缆沟内，不得布置热力管道 、油气管以及其他可能引起着火的管道和设备。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":4,"type":"判断","question":"柴油发电机蓄电池电压为24V DC。（ ）（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":5,"type":"单选","question":"#5、6机C高压厂用工作变压器冷却风扇投“自动”时，当高厂变负荷达到（ ）或高厂变顶层油温达到（），高厂变辅助冷却风扇自动投入运行。","options":{"A":"70%（电流>472","B":"70%（电流>472","C":"90%（电流>472","D":"90%（电流>472"},"answer":"A"},{"num":6,"type":"判断","question":"110V/220V蓄电池每只电瓶浮充电压为2.25V，均充电压为2.35V。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":7,"type":"判断","question":"UPS装置正常情况下输出电压为230±3V，输出频率为50±0.25Hz。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":8,"type":"判断","question":"断路器设备特别是联络用断路器断口外绝缘应满足不小于1.15倍（252 kV）或1.2倍（363 kV及550 kV）相对地外绝缘的要求。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":9,"type":"单选","question":"微正压装置投入时，检查压力调节器运行正常，出口压力表指示在（）k Pa。","options":{"A":"0.3 ～ 2.50","B":"0.3 ～ 2.5","C":"0.2 ～ 2.5","D":"0.35 ～ 2.5"},"answer":"B"},{"num":10,"type":"判断","question":"执行一个操作任务时，必须按操作票中的操作顺序依次执行，不允许颠 倒操作顺序执行。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":11,"type":"单选","question":"#03启/备变冷却风扇投“自动”时，变压器高压侧电流达到（）A时， #03启/备变全部5组冷却风扇自动投入运行。","options":{"A":"88","B":"68","C":"78","D":"98"},"answer":"A"},{"num":12,"type":"判断","question":"发电机定子冷却水流量≤96t/h时，主汽轮机联锁保护跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":13,"type":"单选","question":"我厂#5、#6发电机定子铁芯报警温度（）。","options":{"A":"110℃","B":"120℃","C":"130℃","D":"140℃"},"answer":"B"},{"num":14,"type":"判断","question":"定子线棒温差达14℃或定子引水管出水温差达12℃，或任一定子槽内层间测温元件温 度超过90℃或出水温度超过85℃时，在确认测温元件无误后，应立即停机处理。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":15,"type":"判断","question":"正常运行时，保持发电机内露点温度在-5℃~- 25℃范围内，发电机内H2纯度应在98%以上（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":16,"type":"判断","question":"#6机6KV 6C段可向#5机6KV 5A、5B段供电，作为机组的备用停机电源。供电方式为单向，不能反向 供电。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":17,"type":"判断","question":"SF6断路器的压力参数(表压)正常0.7MPa（）A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":18,"type":"单选","question":"频率变动的范围，不超过（）Hz时，发电机可按额定容量运行。","options":{"A":"±0.5","B":"±1","C":"±2","D":"±3"},"answer":"A"},{"num":19,"type":"单选","question":"高厂变绕组温度高限（）℃。","options":{"A":"120","B":"85","C":"105","D":"95"},"answer":"C"},{"num":20,"type":"判断","question":"氢区交出火种，不允许穿钉有铁掌的鞋子。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":21,"type":"判断","question":"氢气纯度正常范围≥98%。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":22,"type":"判断","question":"加强氢气纯度检测，发电机氢冷系统中氢气纯度应不低于96％。含氧量 应不超过2％。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":23,"type":"单选","question":"主变压器绕组温度正常范围允许温升（）。","options":{"A":"60K","B":"50K","C":"45K","D":"30K"},"answer":"A"},{"num":24,"type":"判断","question":"检查变压器运行正常无异常的鸣叫或怪味，保证变压器的线圈温升不超 过限值80K。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":25,"type":"判断","question":"发电机冷氢温度>53℃时，主汽轮机联锁保护跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":26,"type":"单选","question":"DC 110V母线浮充电压为（）V，均充电压为（）V。","options":{"A":"117,122","B":"127,122","C":"117,112","D":"117,132"},"answer":"A"},{"num":27,"type":"单选","question":"SF6断路器的压力参数(表压)报警气压（）MPa。","options":{"A":"0.6","B":"0.62","C":"0.7","D":"0.72"},"answer":"B"},{"num":28,"type":"判断","question":"在操作过程中，监护人不允许代替操作人操作。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":29,"type":"判断","question":"我厂#5、#6发电机最高允许氢压0.5MPa。（）A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":30,"type":"判断","question":"UPS装置正常情况下输出电流不大于109A，公用UPS不大于364A。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":31,"type":"单选","question":"分段执行的结果应由监护人向下令人汇报，在得到下令人的允许后才能进行下一阶段 的操作，禁止不经下令人批准擅作主张将应分段执行的操作连续执行完毕后汇报（）","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":32,"type":"单选","question":"发电机额定励磁电流正常值（）A。","options":{"A":"5888","B":"5800","C":"5778","D":"5887"},"answer":"D"},{"num":33,"type":"判断","question":"操作票必须由操作人填写。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":34,"type":"判断","question":"电缆竖井和电缆沟应分段做防火隔离，对敷设在电缆隧道和厂房内构架 上的电缆要采取分段阻燃措施。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":35,"type":"单选","question":"发电机额定电压正常值（）kV。","options":{"A":"24","B":"22","C":"25","D":"27"},"answer":"D"},{"num":36,"type":"判断","question":"发变组热备用状态规定：发变组开关、励磁开关、发变组出口刀闸在分 闸状态。发变组保护投停，具体按发变组保护规程的规定执行。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":37,"type":"单选","question":"发电机运行电压的变动范围在额定电压的（）以内而功率因数为额定值 时，其额定容量不变。","options":{"A":"±10％","B":"±5％","C":"±20％","D":"±15％"},"answer":"B"},{"num":38,"type":"单选","question":"启/备变油温正常范围允许温升（）。","options":{"A":"45K","B":"60K","C":"50K","D":"43K"},"answer":"C"},{"num":39,"type":"判断","question":"220KV 、500KV系统中的各隔离刀闸必须用电动执行机构进行拉合闸操作或通过 NCS远方操作（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":40,"type":"单选","question":"电动机可在额定电压变动（）范围内运行，其额定出力不变。","options":{"A":"-15%～＋20%","B":"-5%～＋10%","C":"-25%～＋20%","D":"-35%～＋30%"},"answer":"B"},{"num":41,"type":"判断","question":"主厂房电缆与热体管路应保持足够的距离，控制电缆不小于0.5m，动力 电缆不小于1m。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":42,"type":"单选","question":"我厂#5、#6发电机额定氢压（）。","options":{"A":"0.5MP","B":"0.45MP","C":"0.55MP","D":"0.6MP"},"answer":"A"},{"num":43,"type":"单选","question":"200kW以下的电动机在做动平衡试验时，每次启动的间隔时间（）小时。","options":{"A":"不小于2","B":"不小于0.5","C":"不小于1","D":"不小于1.5"},"answer":"B"},{"num":44,"type":"判断","question":"发电机在正常运行时，机内氢压应保持在0.5MPa左右，高于0.52MPa或低 于0.47MPa，相应报警发出。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":45,"type":"单选","question":"氢气露点低限（）℃。","options":{"A":"-60","B":"-40","C":"-30","D":"-80"},"answer":"B"},{"num":46,"type":"判断","question":"每一份操作票只允许填写一个操作任务，操作者本人每一次只允许执行 一个操作任务，不允许同时执行多个操作任务。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":47,"type":"单选","question":"发电机定子铁心温度大于（）℃，经处理无效，故障停机。","options":{"A":"120","B":"130","C":"110","D":"100"},"answer":"B"},{"num":48,"type":"单选","question":"发电机定子线圈温升为（）℃。","options":{"A":"＜58","B":"＜54","C":">54","D":">58"},"answer":"B"},{"num":49,"type":"判断","question":"发电机额定电压正常值27kV。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":50,"type":"单选","question":"我厂#5、#6发电机额定转速Nn（）。","options":{"A":"1500r/min","B":"18300r/min","C":"3000r/min","D":"2000r/min"},"answer":"C"},{"num":51,"type":"判断","question":"已执行过的操作票，不允许重复使用（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":52,"type":"判断","question":"投入四组氢气冷却器运行，发电机氢温控制投入自动，以定冷水温度为 基准，控制冷氢温度高于定冷水温约5℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":53,"type":"单选","question":"励磁变绕组温度（）℃报警、（）℃跳闸。","options":{"A":"140,140","B":"140,150","C":"150,150","D":"130,140"},"answer":"B"},{"num":54,"type":"判断","question":"我厂#5、#6发电机额定容量Sn1112MWA。 （） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":55,"type":"判断","question":"当电动操作机构不能执行时，不允许用顶接触器的方法或使用摇把拉合 刀闸操作。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":56,"type":"判断","question":"机组加有功的同时，应及时调节机组无功和电压，保持机端电压及6KV厂 用母线电压在允许范围。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":57,"type":"单选","question":"6KV系统工作电源和备用电源之正常切换，需满足切换条件：电压差（） %、频率差（）HZ 、相位差。","options":{"A":"＜15，＜0.2， ＜20o","B":"＜10，＜0.2， ＜20o","C":"＜15，＜0.3， ＜20o","D":""},"answer":"A"},{"num":58,"type":"单选","question":"发电机额定电流正常值（）kA。","options":{"A":"23","B":"24","C":"23.778","D":"22.778"},"answer":"C"},{"num":59,"type":"单选","question":"封闭母线压力释放装置动作值（）kPa。","options":{"A":"3","B":"2.5","C":"0.3","D":"1.25"},"answer":"A"},{"num":60,"type":"单选","question":"发电机转子线圈温升正常范围（）℃。","options":{"A":">64","B":">75","C":"＜64","D":"<75"},"answer":"C"},{"num":61,"type":"判断","question":"#5、#6机220V直流系统均采用单母线供电方式，分别配置3台整流器、2 组蓄电池。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":62,"type":"单选","question":"封闭母线压力低限（）kPa。","options":{"A":"2.5","B":"0.3","C":"1.25","D":"3"},"answer":"B"},{"num":63,"type":"单选","question":"氢气纯度正常范围（）%。","options":{"A":">98","B":"<88","C":"≥98","D":"<98"},"answer":"C"},{"num":64,"type":"单选","question":"发电机负序电流正常范围（）。","options":{"A":">8","B":"＜6","C":"＜8","D":"＜10"},"answer":"B"},{"num":65,"type":"判断","question":"电动机本身温度60℃以上为冷态。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":66,"type":"判断","question":"柴油发电机冷却水温为65～85℃。（ ）（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":67,"type":"判断","question":"220KV电缆最高允许电压(Um）252kV。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":68,"type":"单选","question":"主变压器油温正常范围允许温升（）。","options":{"A":"60K","B":"50K","C":"45K","D":"40K"},"answer":"B"},{"num":69,"type":"判断","question":"操作者所使用的操作票必须为逐级审查合格的操作票；不合格的操作票 禁止在操作中使用。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":70,"type":"判断","question":"我厂#5、#6发电机额定功率Pn1000MW。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":71,"type":"判断","question":"变压器冷却方式为自然油循环风冷时，最高上层油温为90℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":72,"type":"单选","question":"500kW以上的电动机在做动平衡试验时，每次启动的间隔时间（）小时。","options":{"A":"不小于2","B":"不小于0.5","C":"不小于1","D":"不小于1.5"},"answer":"A"},{"num":73,"type":"判断","question":"我厂#5、#6发电机额定励磁电流Ifn5887A。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":74,"type":"判断","question":"220KV电缆额定电压（Uo/U）127/220kV。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":75,"type":"单选","question":"定子冷却水进口温度正常值（）℃。","options":{"A":"70","B":"48","C":"53","D":"58"},"answer":"B"},{"num":76,"type":"判断","question":"我厂#5、#6发电机定子冷却水流量120t/h。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":77,"type":"判断","question":"我厂#5、#6发电机额定功率因数COSΦ0.9（滞后）。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":78,"type":"判断","question":"发电机定子线圈进水温度≥58℃时，主汽轮机联锁保护跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":79,"type":"判断","question":"每台机单控110V直流系统采用独立分段供电方式，分别配置3台整流器、 2组蓄电池。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":80,"type":"判断","question":"发电机额定电流正常值23.778kA。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":81,"type":"判断","question":"6KV及380V系统中，凡具有远方分合闸的开关，必须远方操作，不允许用 就地盘上的分合闸按钮进行操作。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":82,"type":"判断","question":"严格执行调度命令，操作时不允许改变操作顺序，当操作发生疑问时，应立即停 止操作，并报告调度部门，不允许随意修改操作票，不允许解除闭锁装置。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":83,"type":"单选","question":"我厂#5、#6发电机定子线圈报警温度（出水）（）。","options":{"A":"65℃","B":"75℃","C":"85℃","D":"95℃"},"answer":"B"},{"num":84,"type":"单选","question":"变压器冷却方式为自然油循环风冷时，最高上层油温为（）℃。","options":{"A":"60","B":"70","C":"80","D":"90"},"answer":"D"},{"num":85,"type":"单选","question":"氢气压力高限（）kPa。","options":{"A":"410","B":"470","C":"500","D":"520"},"answer":"D"},{"num":86,"type":"单选","question":"我厂#5、#6发电机额定定子电流（）。","options":{"A":"33778","B":"23378","C":"23778","D":"23338"},"answer":"C"},{"num":87,"type":"判断","question":"测量发电机转子绝缘电阻，绝缘电阻值在40℃时应大于0.5MΩ；转子绝缘不合格时，机组不得投入运行。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":88,"type":"单选","question":"定子水冷箱水位正常值（）mm。","options":{"A":"100","B":"400","C":"300","D":"200"},"answer":"B"},{"num":89,"type":"单选","question":"检查母线在微正压状态下运行，出口压力表指示在（）kPa。","options":{"A":"0.3 ～ 2.5","B":"0.3 ～ 2.0","C":"0.2 ～ 2.5","D":"0.35 ～ 2.5"},"answer":"A"},{"num":90,"type":"单选","question":"启/备变绕组温度高限（）℃。","options":{"A":"120","B":"105","C":"105","D":"115"},"answer":"B"},{"num":91,"type":"判断","question":"变流器中每只变流元件的温度达64℃时报警并将该变流元件的导通率由4 00次/s迅速下降至300次/s（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":92,"type":"单选","question":"SF6断路器的压力参数(表压)最低（）MPa。","options":{"A":"0.5","B":"0.6","C":"0.7","D":"0.8"},"answer":"B"},{"num":93,"type":"判断","question":"将零序基波段保护和零序三次谐波段保护出口分开，零序基波段保护投 跳闸，零序三次谐波段保护只允许投信号。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":94,"type":"判断","question":"正常情况下或做动平衡试验时，200kW以下的电动机每次启动的间隔时间 不小于0.5小时。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":95,"type":"判断","question":"机、炉的各电动门，严禁将抽屉互换（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":96,"type":"判断","question":"当整流器输出电流大于限流值时模块自动进入稳流运行状态（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":97,"type":"判断","question":"重大操作或特别复杂的操作，必须加强监护，即本机的机长或本班的班 长应到现场充当第二监护人。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":98,"type":"单选","question":"定子冷却水流量保护跳闸值（）t/h。","options":{"A":"90","B":"96","C":"108","D":"120"},"answer":"B"},{"num":99,"type":"判断","question":"变频室的环境温度度在0℃至40℃ 之间，空气相对湿度小于95％，无凝结。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":100,"type":"判断","question":"设备送电前，应确认设备绝缘良好，应将操作电源、报警监视电源以及仪 表的保护用的二次电压回路保险或小开关、变送器的辅助电源送电。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":101,"type":"判断","question":"220KV 、500KV系统中的开关操作及厂用电系统运行方式的更改，必须使用电气 倒闸操作票。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":102,"type":"判断","question":"主机柜温度到80℃，由逆变器自动切至旁路运行；温度至55℃时，又由旁 路自动切回逆变器运行。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":3,"type":"判断","question":"一个操作任务，原则要本班执行完毕后交班，但若因故而至交班不能将该票执行完毕时 ，未执行的各项划“×”记号，最后一项“汇报值长操作完毕”应划“√”记号，此票加盖“已执 行”章，接班值不允许不填操作票而按此票继续执行，而应该对照上一个班工作完成的实 际情况，重新填写操作票（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":104,"type":"判断","question":"储氢罐底部及其排水管防冻措施不准采用底部封闭方式，以防漏氢积聚。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":105,"type":"判断","question":"每一操作顺序只允许填写一个操作项目，不允许将多个操作项目填入到 一个操作顺序中。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":106,"type":"判断","question":"检查母线在微正压状态下运行，出口压力表指示在0.3 ～ 2.5kPa。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":107,"type":"判断","question":"发电机并列操作，本机的机长或本班的班长为监护人，他人不准充当此 责（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":108,"type":"判断","question":"定子线棒层间最高与最低温度间的温差达8℃或定子线棒引水管出水温差 达8℃时应报警（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":109,"type":"判断","question":"柴油发电机运行期间每4小时，应检查一次油位；如果油位偏低，应及时 联系有关值班人员补油。（ ）（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":110,"type":"单选","question":"发电机额定电压低限（）kV。","options":{"A":"26","B":"24.65","C":"25.65","D":"26.65"},"answer":"C"},{"num":111,"type":"判断","question":"蓄电池室正常温度应维持10℃～30℃。蓄电池标准温度为25℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":112,"type":"判断","question":"400V重要动力电缆应选用阻燃型电缆（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":113,"type":"单选","question":"变频室的环境温度度在（）之间，空气相对湿度（），无凝结。","options":{"A":"0℃~40℃，小于97％","B":"0℃~30℃，小于95％","C":"0℃~40℃，小于95％","D":"10℃~40℃，小于95％"},"answer":"C"},{"num":114,"type":"判断","question":"我厂#5、#6发电机额定定子电流23778A。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":115,"type":"单选","question":"我厂#5、#6发电机额定频率 fn（）。","options":{"A":"49Hz","B":"50Hz","C":"48Hz","D":"51Hz"},"answer":"B"},{"num":116,"type":"单选","question":"电动机轴承温度应按制造厂规定，制造厂未规定时，参照以下标准执行 ：滚动轴承温度不超过（）℃；滑动轴承温度不超过（）℃。","options":{"A":"95，80","B":"85，80","C":"95，85","D":"85，85"},"answer":"A"},{"num":117,"type":"单选","question":"发电机定子线圈温度正常范围（）℃。","options":{"A":"＜80","B":"＜90","C":"＜100","D":"＜110"},"answer":"B"},{"num":118,"type":"单选","question":"UPS系统主机柜温度到（）℃，由逆变器自动切至旁路运行；温度至（） ℃时，又由旁路自动切回逆变器运行。","options":{"A":"80，55","B":"85，55","C":"80，65","D":"85，65"},"answer":"A"},{"num":119,"type":"单选","question":"高厂变绕组温度正常范围允许温升（）。","options":{"A":"60K","B":"50K","C":"45K","D":"30K"},"answer":"A"},{"num":120,"type":"判断","question":"浸有油类的杂物着火时，可用泡沫灭火器，沙子等灭火。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":121,"type":"判断","question":"若发现H2纯度下降，应严密注意并寻找原因，纯度下降至97%或含氧量大 于1.05％，必须及时进行氢气置换以提高H2纯度。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":122,"type":"判断","question":"在电源电压偏差为十10％～－15％、频率偏差为十4％～－6％时，励磁 控制系统及其继电器、开关等操作系统均能正常工作。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":123,"type":"判断","question":"正常情况下或做动平衡试验时，200kW～500kW的电动机每次启动的间隔 时间不小于0.5小时。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":124,"type":"单选","question":"#03启/备变冷却风扇投“自动”时，当#03启/备变顶层油温（）℃冷却风扇 自动停运。","options":{"A":"低于65","B":"高于65","C":"高于55","D":"低于55"},"answer":"D"},{"num":125,"type":"单选","question":"#03启/备变冷却风扇投“自动”时，变压器高压侧电流到（）A时，#03启/ 备变冷却风扇自动停止运行。","options":{"A":"83","B":"63","C":"73","D":"93"},"answer":"B"},{"num":126,"type":"单选","question":"我厂#5、#6发电机额定功率Pn（）。","options":{"A":"1200MW","B":"1000MW","C":"1100MW","D":"1050MW"},"answer":"B"},{"num":127,"type":"单选","question":"#5、6机A高压厂用变压器冷却风扇投“自动”时，当高厂变负荷达到（） 或高厂变顶层油温达到（），高厂变辅助冷却风扇自动投入运行。","options":{"A":"70%（电流>747","B":"90%（电流>747","C":"70%（电流>747","D":"90%（电流>747"},"answer":"C"},{"num":128,"type":"单选","question":"封闭母线压力高限（）kPa。","options":{"A":"3","B":"1.25","C":"0.3","D":"2.5"},"answer":"D"},{"num":129,"type":"单选","question":"最大允许运行氢气温度为（）℃。","options":{"A":"84","B":"88","C":"86","D":"90"},"answer":"D"},{"num":130,"type":"单选","question":"发电机额定容量正常值（）MVA。","options":{"A":"1050","B":"1112","C":"1200","D":"1000"},"answer":"B"},{"num":131,"type":"单选","question":"启/备变绕组温度正常范围允许温升（）。","options":{"A":"45K","B":"50K","C":"60K","D":"40K"},"answer":"C"},{"num":132,"type":"单选","question":"充氢完毕，确认发电机内氢气纯度大于（）。","options":{"A":"95%","B":"90%","C":"98%","D":"100%"},"answer":"C"},{"num":133,"type":"单选","question":"UPS装置正常情况下输出电流（）A，","options":{"A":"不大于400","B":"不小于364","C":"不小于400","D":"不大于364"},"answer":"D"},{"num":134,"type":"单选","question":"冷氢温度保护跳闸值（）℃。","options":{"A":"84","B":"43","C":"53","D":"48"},"answer":"C"},{"num":135,"type":"单选","question":"220KV电缆最高允许电压(Um）（）。","options":{"A":"222 kV","B":"252 kV","C":"242 kV","D":"232 kV"},"answer":"B"},{"num":136,"type":"单选","question":"发电机功率因素COSΦ正常值（）kV。","options":{"A":"1","B":"0.8","C":"0.7","D":"0.9"},"answer":"D"},{"num":137,"type":"单选","question":"发电机密封油系统投运时，确认密封油与氢气的差压在（）左右，投入 交、直流密封油泵联锁。","options":{"A":"80kP","B":"120kP","C":"60kP","D":"100kP"},"answer":"B"},{"num":138,"type":"单选","question":"发电机空载励磁电流为（）A左右。","options":{"A":"1960","B":"1962","C":"1950","D":"1952"},"answer":"D"},{"num":139,"type":"单选","question":"密封油/氢气差压正常值（）kPa。","options":{"A":"100","B":"120","C":"115","D":"80"},"answer":"B"},{"num":140,"type":"单选","question":"我厂#5、#6发电机额定定子电压（）。","options":{"A":"25kV","B":"17kV","C":"27kV","D":"30kV"},"answer":"C"},{"num":141,"type":"单选","question":"厂用电380V母线电压下限（）V。","options":{"A":"380","B":"360","C":"400","D":"361"},"answer":"D"},{"num":142,"type":"单选","question":"公用UPS电流（）A。","options":{"A":"不大于109","B":"不小于109","C":"不大于120","D":"不小于120"},"answer":"A"},{"num":143,"type":"判断","question":"主厂房及相关区域照明良好，事故照明可退出备用。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":144,"type":"多选","question":"发变组跳闸后的主要现象有（）。","options":{"A":"发变组保护及相关出口动作","B":"","C":"发变组出口开关事故跳闸，励磁开关跳闸","D":"汽轮机主汽门关闭，锅炉MFT动作。 E、 E.6KV母线工作电源开关事故跳闸，备用电源开关自动投入。 F、 F.发电机有功负荷、无功负荷、出口电压、定子电流、励磁电流、励磁电压指示为零 "},"answer":"A|B|C|D|"},{"num":145,"type":"判断","question":"我厂#5、#6发电机定子线棒冷却水出口水温48℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":146,"type":"单选","question":"发电机不排氢，维持额定氢压运行，并应注意氢气纯度在规定范围内， 加强对机内氢气湿度的监视，机内氢气露点在℃。（）","options":{"A":"-5~ -15","B":"-15~ -25","C":"-5~ -25","D":"-25~ -30"},"answer":"C"},{"num":147,"type":"单选","question":"厂用电母线额定电压（）","options":{"A":"6.6KV，380V","B":"6.3KV，380V","C":"6KV，380V","D":"6KV，400V"},"answer":"C"},{"num":148,"type":"判断","question":"氢气放空阀、安全阀均须设通往室外高出屋顶2m以上的金属放空管和阻 火器。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":149,"type":"判断","question":"需就地操作的开关以及设备就地停送电操作，必须核对设备名称和编号 及设备的实际运行状态无误后，方可操作。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":150,"type":"单选","question":"发电机定子铁心温度高限（）℃。","options":{"A":"100","B":"130","C":"120","D":"110"},"answer":"C"},{"num":151,"type":"单选","question":"机组正常运行时，发电机氢温控制投自动，以定冷水进水温度为基准， 控制冷氢温度低于定冷水进水温度约（ ）℃。","options":{"A":"5","B":"10","C":"20","D":"15"},"answer":"A"},{"num":152,"type":"判断","question":"断路器失灵保护的相电流判别元件动作时间和返回时间均不应大于20ms 。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":153,"type":"单选","question":"密封油温正常值（）℃。","options":{"A":"40","B":"45","C":"50","D":"35"},"answer":"B"},{"num":154,"type":"多选","question":"继电保护及自动装置运行中的检查有（）。","options":{"A":"检查继电保护和自动装置无异味、无过热、无异声、无振动、无异常信号","B":"检查继电器罩壳及微机保护柜门等完整，无裂纹，所有户外端子箱密封良好，PT二 次开关在投入位置","C":"装置所属开关、刀闸、保险、试验部件插头、压板等位置应正确，装置内部表计指 示应正确","D":"继电器接点无抖动、发热、发响现象，继电器无动作信号、掉牌及其它异常现象。 E、 E.装置所属各指示灯的亮灯情况及保护的投、停均和当时的实际运行方式相符"},"answer":"A|B|C|D|"},{"num":155,"type":"单选","question":"UPS系统连续额定运行最高环境温度（）℃。","options":{"A":"40","B":"50","C":"60","D":"70"},"answer":"B"},{"num":156,"type":"单选","question":"电动机的额定冷却空气温度一般为（）℃","options":{"A":"40","B":"30","C":"20","D":"10"},"answer":"A"},{"num":157,"type":"单选","question":"发电机运行电压的变动范围在额定电压的（）以内而功率因数为额定值 时，其额定容量不变。","options":{"A":"±15％","B":"±5％","C":"±10％","D":"±25％"},"answer":"B"},{"num":158,"type":"判断","question":"正常情况下或做动平衡试验时，500kW以上的电动机每次启动的间隔时间 不小于2小时。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":159,"type":"多选","question":"转机故障停运条件有（）。","options":{"A":"泵、风机、电动机异常声音","B":"电动机冒烟、起火","C":"电动机缺相运行","D":"泵发生汽化。 E、 E.电动机电流异常增大或绝缘有焦味或电机铁芯、线圈温度超限"},"answer":"A|B|C|D|"},{"num":160,"type":"多选","question":"发电机失磁现象有（）。","options":{"A":"","B":"转子电流指示等于零或接近于零","C":"定子电流表的指示升高并摆动","D":"有功功率表指示降低并摆动。 E、 E.机端电压降低并摆动。 F、 F.无功功率指示负值"},"answer":"A|B|C|D|"},{"num":161,"type":"单选","question":"当电压提高（）时，电动机电流应减少（）。","options":{"A":"+20%，20%","B":"+10%，20%","C":"+10%，10%","D":"+20%，10%"},"answer":"C"},{"num":162,"type":"单选","question":"充氢完毕，确认发电机内氢气压力为（）。","options":{"A":"0.4MP","B":"0.45MP","C":"0.51MP","D":"0.47MP"},"answer":"D"},{"num":163,"type":"单选","question":"厂用电6KV母线电压上限（）KV。","options":{"A":"6","B":"6.3","C":"6.1","D":"6.6"},"answer":"D"},{"num":164,"type":"判断","question":"局放试验的合格标准：220KV及以上变压器，不大于100pC（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":165,"type":"单选","question":"热氢温度高限（）℃。","options":{"A":"84","B":"88","C":"85","D":"90"},"answer":"B"},{"num":166,"type":"判断","question":"装设接地线必须先接接地端，后接导体端，且必须接触良好。拆接地线 的顺序与此相反。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":167,"type":"判断","question":"500KV断路器额定电流4000A。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":168,"type":"判断","question":"水内冷发电机水质应严格在控制规定范为，电导率：≤1μs/cm PH值：6-8 。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":169,"type":"判断","question":"变压器冷却方式为强迫油循环风冷或自然油循环风冷时，冷却介质最高 温度为40℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":170,"type":"多选","question":"蓄电池组的正常检查与维护有（）。","options":{"A":"蓄电池室温度应保持在正常范围内，室内暖通装置应能正常投、停","B":"蓄电池室内应保持清洁、干燥，照明充足，无强烈异味，消防设施完好，蓄电池室 内禁止吸烟，禁止明火作业，禁止使用大功率白炽灯","C":"蓄电池容器应完整，无破损、无漏液、无膨胀、无过热、极板无弯曲","D":"蓄电池各连接头应坚固无松动，连接线无过热、无腐蚀现象。 E、 E.蓄电池专业维修人员每三个月对110V、220V蓄电池进行一次均衡充电，运行人员 配合进行相应操作，每二年一次对蓄电池进行一次核对性充放电"},"answer":"A|B|C|D|"},{"num":171,"type":"单选","question":"检查变频室的通风、照明良好，通风设备能够正常运转，变频器温度（ ）℃","options":{"A":"大于65","B":"小于62","C":"小于65","D":"大于62"},"answer":"B"},{"num":172,"type":"单选","question":"密封油温低限（）℃。","options":{"A":"40","B":"50","C":"35","D":"45"},"answer":"C"},{"num":173,"type":"判断","question":"我厂#5、#6发电机额定励磁电压Ufn437V。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":174,"type":"单选","question":"定子冷却水出口温度高限（）℃。","options":{"A":"75","B":"58","C":"70","D":"53"},"answer":"A"},{"num":175,"type":"判断","question":"发电机氢气纯度＜95%，氢气压力＜0.3MPa时，禁止机组启动或并网。（ ） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":176,"type":"判断","question":"正常运行中电压互感器二次回路不得短路，电流互感器二次回路不得开 路。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":177,"type":"多选","question":"发电机出口电压互感器断线现象有（）。","options":{"A":"","B":"定子电压指示降低或为零，三相电压指示不平衡，频率表指示异常","C":"励磁调节通道可能发生自动切换","D":"发电机有功、无功指示减小。 E、 E.与发电机出口电压互感器相关的有关保护出口回路被闭锁"},"answer":"A|B|C|D|"},{"num":178,"type":"单选","question":"我厂#5、#6发电机最大负荷时定子线圈运行温度（层间）（）。","options":{"A":"≤70℃","B":"≤80℃","C":"≤90℃","D":"≤100℃"},"answer":"C"},{"num":179,"type":"多选","question":"机组解列前的准备有（）。","options":{"A":"发电机解列前，值班人员应根据停机要求准备操作票，经审核批准后执行","B":"柴油发电机试转正常","C":"在机组解列前应抄录发电机电量读数还应及时联系调度将电量考核系统改为停机模 式","D":"发电机停机过程中，随着有功负荷的逐步降低，值班人员应相应降低无功负荷，尽 量维持机组的功率因数机在允许范围内。 E、 E.发电机解列前，确认厂用电已倒由#03启备变供电"},"answer":"A|B|C|D|"},{"num":180,"type":"多选","question":"厂用电全部中断的主要现象有（）。","options":{"A":"锅炉MFT，汽机跳闸，发变组解列；声光报警、相应光字牌亮","B":"控制室事故报警、交流照明熄灭、直流事故照明亮，控制室灯光变暗","C":"厂用电6kV母线“低电压”保护报警，母线电压表指示为零，低电压保护动作的相应 负荷跳闸","D":"厂房内机器设备突然全部停运，运转声消失"},"answer":"A|B|C|D"},{"num":181,"type":"单选","question":"SF6断路器的压力参数(表压)正常（）MPa","options":{"A":"0.5","B":"0.6","C":"0.7","D":"0.8"},"answer":"C"},{"num":182,"type":"多选","question":"发电机励磁系统故障原因有（）。","options":{"A":"励磁过压","B":"整流器故障","C":"励磁变压器风扇故障或风道堵塞","D":"励磁瞬时极度过流。 E、 E.功率桥输入电压过高"},"answer":"A|B|C|D|"},{"num":183,"type":"单选","question":"发电机定子线圈温度>100℃或最高和最低温差达（）℃，经处理无效，故 障停机。","options":{"A":"14","B":"12","C":"10","D":"8"},"answer":"A"},{"num":184,"type":"单选","question":"厂用电6KV母线电压下限（）KV。","options":{"A":"5.7","B":"6","C":"5.8","D":"5.9"},"answer":"A"},{"num":185,"type":"单选","question":"SF6断路器的压力参数(表压)最高（）MPa。","options":{"A":"0.5","B":"0.6","C":"0.7","D":"0.8"},"answer":"D"},{"num":186,"type":"单选","question":"我厂#5、#6发电机额定负荷时定子线圈运行温度（层间）（）。","options":{"A":"≤70℃","B":"≤80℃","C":"≤90℃","D":"≤100℃"},"answer":"C"},{"num":187,"type":"判断","question":"未浸油类的杂物着火时，可用水，泡沫灭火器，沙子等灭火。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":188,"type":"判断","question":"变压器投入运行时，应先合负荷侧开关，后合电源侧开关；停运顺序相 反。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":189,"type":"单选","question":"启/备变油温高限（）℃。","options":{"A":"95","B":"105","C":"120","D":"85"},"answer":"D"},{"num":190,"type":"单选","question":"主变压器任一冷却器确定为“辅助冷却器控制”时，送上电源后，当主变负 荷（）时或主变油温（），该组冷却器油泵和冷却风扇自动停运。","options":{"A":"80%（电流>878","B":"小于50%（电流<627","C":"80%（电流>878","D":"大于50%（电流<627"},"answer":"B"},{"num":191,"type":"多选","question":"系统或发电机振荡及失步现象有（）。","options":{"A":"发电机电压指示摆动，通常是降低，照明忽明忽暗","B":"发电机有功、无功指示大范围摆动","C":"发电机定子电流指示大幅度摆动，超过额定值","D":"转子电流指示在正常值附近摆动。 E、 E.发电机发出有节奏的异常轰鸣声，并与上述参数摆动合拍。 F、 F.若失磁引起振荡，则励磁电流可能接近于零"},"answer":"A|B|D|"},{"num":192,"type":"多选","question":"防止带电挂接地线（）。","options":{"A":"必须对停电设备验明确无电压后，方可挂接地线；验电时，必须对停电设备进的每 一相分别逐相验电","B":"表征设备运行状态的红绿灯、电流表、设备带电显示灯、开关的分合状态指示及设备 的实际状态等，其中任一表征表明设备在运行，则视为该设备未停电，不允许在该设备 上挂接地线","C":"500KV线路侧刀闸的操作（指推上或拉开该刀闸），必须得到值长的批准","D":"接地线安装的部位与带电部分必须有明显的断开点；接地线安装的部位与检修部分 之间不允许连有开关和保险器。 E、 E.规范封装临时地线的地点，允许随意变更地点封装临时地线"},"answer":"A|B|C|D"},{"num":193,"type":"单选","question":"定子绕组绝缘电阻在40℃时应大于（）。","options":{"A":"6MΩ","B":"27MΩ","C":"10MΩ","D":"20MΩ"},"answer":"B"},{"num":194,"type":"判断","question":"电动机本身温度60℃及以下为冷态。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":195,"type":"单选","question":"UPS系统逆变器装置额定输入直流电压为（）V。","options":{"A":"200±44","B":"210±44","C":"220±44","D":"220±34"},"answer":"C"},{"num":196,"type":"单选","question":"发电机空载励磁电压为（）V左右。","options":{"A":"121","B":"122","C":"144","D":"114"},"answer":"C"},{"num":197,"type":"单选","question":"#03启/备变冷却风扇投“自动”时，#03当启/备变顶层油温达到规定值（） ℃ ，#03启/备变5组冷却风扇全部投入运行。","options":{"A":"45","B":"55","C":"65","D":"75"},"answer":"C"},{"num":198,"type":"单选","question":"氢气露点正常范围（）℃。","options":{"A":"＜-15","B":"＜-5","C":"＜-25","D":">-5"},"answer":"B"},{"num":199,"type":"判断","question":"6KV系统工作电源和备用电源之间的正常切换：采用“并联自动”方式；需满足切换条件：电压差＜15%、频率差＜0.2HZ 、相位差 ＜20o。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":200,"type":"判断","question":"对于新建、扩建的火力发电机组主厂房、输煤、燃油及其他易燃易爆场 所宜选用阻燃电缆。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":201,"type":"单选","question":"UPS装置正常情况下输出电压为（）V。","options":{"A":"220±3","B":"230±3","C":"230±5","D":"230±5"},"answer":"B"},{"num":202,"type":"多选","question":"下列属于发电机并网前的准备的是（）。","options":{"A":"检查确认发变组一次设备及辅助设备符合启动投运要求，且二次设备系统完好","B":"检查励磁变本体及引出线各部完好","C":"确认发电机封闭母线微正压装置已经正常投运，压力值0.5~2.0kP","D":"确认发电机中性点接地刀闸已断开。 E、 E.确认发变组保护正常投运"},"answer":"A|B|C|"},{"num":203,"type":"判断","question":"充氢过程中，严密监视密封油与氢气差压，维持差压在120kPa左右。（ ） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":204,"type":"判断","question":"每操作完一项，划一个“√”，不允许操作前先划已执行“√”和操作几项后连 划已执行“√”记号。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":205,"type":"单选","question":"直流系统蓄电池室正常温度应维持（）℃。","options":{"A":"10～20","B":"20～30","C":"10～30","D":"10～15"},"answer":"C"},{"num":206,"type":"单选","question":"发电机频率调整范围应在Hz以内。（）","options":{"A":"50±0.2","B":"50±0.2","C":"50±0.25","D":"50±0.3"},"answer":"A"},{"num":207,"type":"单选","question":"主变压器绕组温度保护跳闸值（）℃。","options":{"A":"105","B":"115","C":"120","D":"125"},"answer":"B"},{"num":208,"type":"判断","question":"设备停电时，即使保护未退出运行，再次送电时，对保护装置及压板的 投入情况不一定检查。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":209,"type":"判断","question":"发变组运行状态规定：发电机转速大于2950r/min，励磁开关已合上或发合闸指 令就可以合上励磁开关，发电机处于待并网状态或在并网状态。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":210,"type":"多选","question":"柴油发电机组的定期工作（）","options":{"A":"柴油发电机组每月应进行一次带负荷运行试验，至少为30%的额定负载，时间至少 为30MIN","B":"每半年应给柴油发电机组排水一次，更换冷却水","C":"每半年对润滑油更换一次","D":"对柴油发电机的安全装置每半年应进行一次校核工作。 E、 E.每半年对柴油发电机的皮带等传动装置进行一次拉紧工作"},"answer":"A|B|C|D|"},{"num":211,"type":"单选","question":"变压器冷却方式为强迫油循环风冷或自然油循环风冷时，冷却介质最高 温度为（）℃。","options":{"A":"40","B":"30","C":"50","D":"60"},"answer":"A"},{"num":212,"type":"判断","question":"27kV、6kV母线绝缘值不低于100MΩ。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":213,"type":"判断","question":"断路器失灵保护的相电流判别元件动作时间和返回时间均不应大于20ms 。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":214,"type":"多选","question":"发电机CT回路故障现象有（）。","options":{"A":"测量用","B":"","C":"“发变组电流回路断线”信号报警","D":"保护用"},"answer":"A|B|C|D|"},{"num":215,"type":"单选","question":"发电机定子线圈温度高限（）℃。","options":{"A":"130","B":"110","C":"100","D":"120"},"answer":"C"},{"num":216,"type":"单选","question":"定子冷却水出口温度正常值（）℃。","options":{"A":"75","B":"70","C":"58","D":"53"},"answer":"B"},{"num":217,"type":"判断","question":"当整流器输出电流小于限流值时模块自动进入稳流运行状态（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":218,"type":"判断","question":"发电机额定励磁电流正常值5887A。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":219,"type":"多选","question":"系统或发电机振荡及失步原因有（）。","options":{"A":"系统发生严重故障，超过稳定限额范围","B":"故障时开关或继电保护拒动或误动，无自动调节装置或装置失灵","C":"失去大电源","D":"多重故障。 E、 E.大机组失磁"},"answer":"A|B|C|D|"},{"num":220,"type":"单选","question":"定子冷却水流量低限（）t/h。","options":{"A":"108","B":"120","C":"96","D":"80"},"answer":"A"},{"num":221,"type":"单选","question":"正常情况下或做动平衡试验时，200kW以下的电动机每次启动的间隔时间 （）。","options":{"A":"不小于0.5小时","B":"不小于1小时","C":"不小于1.5小时","D":"不小于2小时"},"answer":"A"},{"num":222,"type":"单选","question":"主变压器绕组温度（）℃时启动另二组冷却风扇；（）℃时启动的二组风 扇停运。","options":{"A":"≥45，＜35","B":"≥55，＜35","C":"≥55，＜45","D":"≥65，＜45"},"answer":"C"},{"num":223,"type":"多选","question":"开关送电前的检查有（）。","options":{"A":"开关工作票已终结，开关柜内接地刀闸确已拉开","B":"开关小车、开关柜内清洁无杂物，周围无遗留工具及杂物","C":"开关报警、闭锁、保护及控制回路完好","D":"开关小车上的机械分合闸状态指示器在合闸位置。 E、 E.开关小车的套管无裂纹"},"answer":"A|B|C|"},{"num":224,"type":"判断","question":"电气操作必须使用操作票，不准无票操作，不准用纸条代替操作票。（ ） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":225,"type":"判断","question":"发电机额定励磁电压正常值437V。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":226,"type":"单选","question":"氢气压力低限（）kPa。","options":{"A":"470","B":"410","C":"500","D":"520"},"answer":"A"},{"num":227,"type":"判断","question":"220KV 、500KV系统中的开关，必须在微机防误闭锁装置的监控下进行操作（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":228,"type":"多选","question":"励磁系统温度异常原因有（）。","options":{"A":"励磁变压器风扇故障或风道堵塞","B":"整流硅风机或整流硅跳闸","C":"环境温度高","D":"励磁电流大"},"answer":"A|B|C|D"},{"num":229,"type":"判断","question":"操作中应严格执行操作监护制，按照“核对、唱票、复诵、模拟、下令、 操作”的顺序执行（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":230,"type":"判断","question":"我厂#5、#6发电机定子线圈报警温度（出水）75℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":231,"type":"单选","question":"高厂变或#03启备变运行异常时的切换，必须满足切换条件：电压差（） %、频率差（）HZ、相位差（）。","options":{"A":"＜10，＜0.2， ＜20o","B":"＜20，＜0.2，＜15o","C":"＜15，＜0.3， ＜20o","D":"＜15，＜0.3， ＜15o"},"answer":"B"},{"num":232,"type":"单选","question":"所有设备厂房门，应加装防鼠挡板，高度为（ ）mm","options":{"A":"500","B":"1000","C":"800","D":"600"},"answer":"A"},{"num":233,"type":"判断","question":"电动机的额定冷却空气温度一般为40℃（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":234,"type":"判断","question":"我厂#5、#6发电机转子线圈报警温度110℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":235,"type":"单选","question":"定子冷却水进口温度高限（）℃。","options":{"A":"53","B":"48","C":"58","D":"70"},"answer":"A"},{"num":236,"type":"单选","question":"封闭母线压力正常值（）kPa。","options":{"A":"0.3","B":"2.5","C":"1.25","D":"3"},"answer":"C"},{"num":237,"type":"判断","question":"#5机6KV 5C段可向#6机6KV 6A、6B段供电，作为机组的备用停机电源。供电能反向供电。（） A、 正确B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":238,"type":"单选","question":"我厂#5、#6发电机最高允许氢压（）。","options":{"A":"0.6MP","B":"0.5MP","C":"0.52MP","D":"0.47"},"answer":"C"},{"num":239,"type":"单选","question":"DC 220V母线浮充电压为（）V，均充电压为（）V。","options":{"A":"234,234","B":"234,244","C":"244,244","D":"234,234"},"answer":"B"},{"num":240,"type":"单选","question":"我厂#5、#6发电机转子线圈报警温度（）。","options":{"A":"100℃","B":"105℃","C":"110℃","D":"115℃"},"answer":"C"},{"num":241,"type":"多选","question":"机组故障录波器正常运行检查（）。","options":{"A":"检查机组故障录波器装置电源指示灯“运行”亮","B":"检查机组故障录波器装置液晶显示屏上无异常信号，时钟指示正确","C":"检查机组故障录波器装置屏内“装置异常”指示灯无报警","D":"检查"},"answer":"A|B|C|D"},{"num":242,"type":"单选","question":"我厂#5、#6发电机额定功率因数COSΦ（）。","options":{"A":"0.9（超前）","B":"0.95（滞后）","C":"0.9（滞后）","D":"0.95（超前）"},"answer":"C"},{"num":243,"type":"单选","question":"500KV断路器额定电压（）。","options":{"A":"550kV","B":"500kV","C":"400kV","D":"600kV"},"answer":"A"},{"num":244,"type":"多选","question":"6KV厂用电失压的处理有（）。 A","options":{"A":"检查6KV快切装置切换情况。若切换失败，不允许盲目抢合备用电源开关，厂用电失去 、后检查柴油发电机联动成功，保安段供电正常，若未联动，应手动启动柴油发电机，恢 复保安电源系统运行","B":"6KV厂用电自投失败后，应确认6KV工作电源开关确已断开，无过流速断、分支零序过 、流、分支复压过流、弧光保护动作，确认不是母线故障引起的跳闸，允许试投备用电源 一次，试送后仍跳闸均不得再送电","C":"6kV母线失电，应将该段母线上未跳的低厂变低压侧（负荷侧）开关拉开，使备用 电源自投，以恢复380V母线电源","D":"对故障母线外部检查，应查明是母线本身故障还是负荷开关拒动而引起越级跳闸。 E、 E.经检查未发现故障或故障点隔离后，手动拉开未跳开关，摇测母线绝缘合格后，向 母线充电，充电正常后及时恢复厂用电"},"answer":"A|B|C|D|"},{"num":245,"type":"单选","question":"主变压器绕组温度高限（）℃。","options":{"A":"115","B":"120","C":"105","D":"100"},"answer":"C"},{"num":246,"type":"单选","question":"正常情况下或做动平衡试验时，500kW以上的电动机每次启动的间隔时间 （）。","options":{"A":"不小于0.5小时","B":"不小于1小时","C":"不小于1.5小时","D":"不小于2小时"},"answer":"D"},{"num":247,"type":"多选","question":"柴油发电机组日常检查和维护（）。","options":{"A":"确认PL","B":"柴油机房温度在0℃~40℃之内","C":"日用油箱油位正常，润滑油油位和冷却水水位正常，各电加热器正常投运","D":"29V蓄电池电压正常，润滑油压力正常。 E、 E.柴油机本体密封正常，无漏水，无漏油现象，定期做好柴油机房的清洁工作"},"answer":"A|B|C|"},{"num":248,"type":"单选","question":"热氢温度正常范围（）℃。","options":{"A":"<84","B":">90","C":"＜84","D":"80"},"answer":"C"},{"num":249,"type":"单选","question":"主变压器油温高限（）℃。","options":{"A":"85","B":"105","C":"95","D":"115"},"answer":"A"},{"num":250,"type":"单选","question":"启/备变绕组温度保护跳闸值（）℃。","options":{"A":"120","B":"85","C":"105","D":"95"},"answer":"A"},{"num":251,"type":"判断","question":"氢气压力正常值520kPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":252,"type":"判断","question":"电动机可在额定电压变动- 5%～＋10%范围内运行，其额定出力不变。当电压提高+10%时，电动机电流应减少10%。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":253,"type":"多选","question":"油浸式变压器检查项目有（）。","options":{"A":"主变、高厂变、#03启/备变的油温和高、低压线圈温度的就地指示和","B":"油位正常，各油位表、温度表不应积污和破损，内部无结露，变压器油色正常，本 体各部位不应有漏油，渗油现象","C":"变压器声音正常，无异声发出，本体及附件不应振动，各部温度正常，冷却器无异 常振动和异声，油泵和风扇运转正常","D":"变压器外壳接地、铁芯接地及中性点接地装置完好，变压器一次回路各接头接触良 好，不应有过热现象。 E、 E.变压器冷却器控制箱内各开关在运行规定位置，变压器消防水回路完好，压力正常 ，套管瓷瓶无破损、裂纹、无放电痕迹，充油套管油位指示正常"},"answer":"A|B|C|D|"},{"num":254,"type":"单选","question":"110V、220V蓄电池每只电瓶浮充电压为（）V，均充电压为（）V。","options":{"A":"2.25，2.35","B":"2.15，2.25","C":"2.45，2.45","D":"2.35，2.35"},"answer":"A"},{"num":255,"type":"单选","question":"UPS装置正常情况下输出频率为（）Hz，","options":{"A":"50±0.3","B":"50±0.4","C":"50±0.25","D":"50±0.15"},"answer":"C"},{"num":256,"type":"单选","question":"SF6断路器的压力参数(表压)闭锁气压（）MPa","options":{"A":"0.5","B":"0.9","C":"0.6","D":"0.8"},"answer":"C"},{"num":257,"type":"单选","question":"正常情况下或做动平衡试验时，200kW～500kW的电动机每次启动的间隔 时间（）。","options":{"A":"不小于0.5小时","B":"不小于1小时","C":"不小于2小时","D":"不小于1.5小时"},"answer":"B"},{"num":258,"type":"单选","question":"定子绕组进水压力正常值（）kPa。","options":{"A":"300","B":"380","C":"400","D":"440"},"answer":"C"},{"num":259,"type":"多选","question":"凝泵高压变频器投运前检查有（）。","options":{"A":"检查检修工作票确已终结，高压变频器旁路柜、变压器柜、模块柜、控制柜等主设 备完好，柜内清洁、无杂物","B":"检查高压变频器各柜内一、二次设备接线完整，正确、可靠","C":"检查高压变频器柜内所有接地线应可靠，接地点无生锈","D":")检查高压变频室的通风、照明应保持良好，通风设备能够正常运转。 E、 E.变频器一次电源送电前，必须将所有的变频器柜门关闭"},"answer":"A|B|C|D|"},{"num":260,"type":"多选","question":"下列属于厂用电切换前应完成的准备工作是（）。","options":{"A":"","B":"","C":"合上6KV","D":"将6kV"},"answer":"A|C|D|"},{"num":261,"type":"单选","question":"200kW～500kW的电动机在做动平衡试验时，每次启动的间隔时间（）小 时。","options":{"A":"不小于2","B":"不小于0.5","C":"不小于1","D":"不小于1.5"},"answer":"C"},{"num":262,"type":"单选","question":"定子冷却水导电率正常范围（）μS/cm。","options":{"A":">1","B":"<3","C":"<1","D":"＜2"},"answer":"D"},{"num":263,"type":"单选","question":"厂用电380V母线电压上限（）V。","options":{"A":"400","B":"420","C":"418","D":"380"},"answer":"C"},{"num":264,"type":"判断","question":"定子水进口温度高于58℃跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":265,"type":"多选","question":"机组380V保安MCC母线恢复供电以后，应检查或操作的主要项目有（） 。","options":{"A":"确认主机交流润滑油泵、二台顶轴油泵自启，否则手动启动，停运主机直流事故油 泵，视主机转速情况，确认主机盘车投运正常。记录汽机惰走时间","B":"启动发电机交流密封油泵，停运直流密封油泵，确认密封油－氢差压正常","C":"启动两台小机的交流油泵，停运小机直流润滑油泵，启动汽泵密封水泵，投运小机 盘车","D":"确认火检冷却风机"},"answer":"A|B|C|D|"},{"num":266,"type":"单选","question":"变压器冷却方式为强迫油循环风冷时，最高上层油温为（）℃。","options":{"A":"75","B":"85","C":"65","D":"95"},"answer":"B"},{"num":267,"type":"单选","question":"封闭母线导体温度允许温升正常值（）。","options":{"A":"60K","B":"45K","C":"30K","D":"50K"},"answer":"B"},{"num":268,"type":"单选","question":"我厂#5、#6发电机额定容量Sn （）。","options":{"A":"1112MW","B":"1111MW","C":"1110MW","D":"1200MW"},"answer":"A"},{"num":269,"type":"单选","question":"正常运行时，保持发电机内露点温度在-5℃~- 25℃范围内，发电机内H2纯度应在98%以上，若发现H2纯度下降，应严密 注意并寻找原因，纯度下降至（ ）或含氧量大于1.05％，必须及时进行氢气置换以提高H2纯度。","options":{"A":"95%","B":"90%","C":"97%","D":"99%"},"answer":"C"},{"num":270,"type":"单选","question":"主变压器油温保护跳闸值（）℃。","options":{"A":"85","B":"105","C":"115","D":"95"},"answer":"D"},{"num":271,"type":"单选","question":"机组运行中定子冷却水温度控制在约（）。","options":{"A":"53℃","B":"58℃","C":"45℃","D":"48℃"},"answer":"D"},{"num":272,"type":"单选","question":"氢气压力正常值（）kPa。","options":{"A":"470","B":"410","C":"500","D":"520"},"answer":"C"},{"num":273,"type":"判断","question":"防误装置应防锈蚀、不卡涩、防干扰、防异物开启，户外的防误装置还 应防水、耐低温。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":274,"type":"多选","question":"直流配电装置及充电器正常运行时的检查及维护有（）。","options":{"A":"交流电源电压正常，交流输入电压平衡无缺相，运行指示灯指示正确，无保护动作 和电源模块故障信号","B":"充电模块各部件无过热、无振动、无异声，风扇运行正常，设备各部分完好无损， 盘内清洁、无杂物、无异味","C":"直流母线及充电装置盘上各开关位置正确，指示灯指示正常，充电装置盘面上无异 常报警，母线配电盘上无接地报警信号","D":"各直流母线电压指示值符合充电装置当时的运行状态，充电装置输出电流指示正常 。 E、 E.备用充电装置必须每月切换投运一次，连续运行一天，以确证其完好"},"answer":"A|B|C|D|"},{"num":275,"type":"单选","question":"直流系统蓄电池标准温度为（）℃","options":{"A":"20","B":"30","C":"10","D":"25"},"answer":"D"},{"num":276,"type":"单选","question":"定子冷却水进口温度保护跳闸值（）℃。","options":{"A":"53","B":"48","C":"58","D":"70"},"answer":"C"},{"num":277,"type":"单选","question":"氢气纯度低限（）%。","options":{"A":"95","B":"90","C":"85","D":"80"},"answer":"A"},{"num":278,"type":"多选","question":"正常运行中电流、电压互感器的检查：（）。","options":{"A":"外部清洁，瓷瓶和套管无裂纹和放电现象","B":"二次回路接线完整，各接头无过热，松动现象，无焦臭味","C":"各接地线应完整良好","D":"电流互感器应无异音，且无振动。 E、 E.各部螺丝紧固，无松动、放电现象"},"answer":"A|B|C|D|"},{"num":279,"type":"判断","question":"我厂#5、#6发电机额定氢压0.52MPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":280,"type":"判断","question":"我厂#5、#6发电机定子冷却水进口水温70℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":281,"type":"单选","question":"充氢过程中，应维持密封油与氢气差压在（）左右。","options":{"A":"60kP","B":"80kP","C":"120kP","D":"100kP"},"answer":"C"},{"num":282,"type":"多选","question":"下列属于电气专业冬季防冻措施的是（）。","options":{"A":"投入各升压站各开关电加热器运行","B":"关好各配电柜（室）、开关、刀闸、端子箱柜门","C":"投入各机组柴油机电加热器运行，检查油、水系统温度正常及循环良好","D":"发电机解列20分钟后停止主变、高厂变冷却装置运行。 E、 E.机组停运后，根据定子水系统的运行情况，应及时将发电机定子水放尽"},"answer":"A|B|C|D|"},{"num":283,"type":"多选","question":"母线运行中检查有（）。","options":{"A":"检查母线在微正压状态下运行，出口压力表指示在0.3 ～ 2.5kP","B":"输送到空气压力调节器的仪用压缩空气应干净，干燥、无油、进口压力表计指示70 0kP","C":"检查安全阀无动作现象，空气压力调节器的各减压阀运行正常，无故障情况","D":"封闭母线无异常振动，无异声，无螺丝松动现象，外壳接地良好，所有连接处的皮 管无破损现象，母线表面及连接端无过热现象。 E、 E.邻近其它金属构件无发热现象，检查封闭母线温度指示正常"},"answer":"A|B|C|D|"},{"num":284,"type":"判断","question":"正常运行中，凡改变电气设备状态的操作，不一定要有书面命令，并得到值长或 机长的同意，根据值长或机长的操作命令，填写操作票后，才能进行操作。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":285,"type":"判断","question":"制氢设备氢气系统中氢气纯度应不低于99.5％。含氧量应不超过0.5％。 （） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":286,"type":"单选","question":"定子冷却水流量正常值（）t/h。","options":{"A":"80","B":"96","C":"108","D":"120"},"answer":"D"},{"num":287,"type":"判断","question":"机组跳闸后，厂用电联动不成功，抢合6KV厂用电时，必须采用失压法， 即：先断开工作电源开关，后合备用电源开关。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":288,"type":"单选","question":"冷氢温度高限（）℃。","options":{"A":"48","B":"43","C":"88","D":"53"},"answer":"A"},{"num":289,"type":"单选","question":"发电机额定励磁电压正常值（）V。","options":{"A":"437","B":"427","C":"417","D":"447"},"answer":"A"},{"num":290,"type":"判断","question":"厂用电母线额定电压6KV和380V（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":291,"type":"单选","question":"发电机定子铁心温正常范围（）℃。","options":{"A":"＜105","B":"＜115","C":"＜125","D":">125"},"answer":"A"},{"num":292,"type":"单选","question":"高厂变绕组温度（）℃冷却风扇自启；（）℃风扇停运。","options":{"A":"≥100，＜90","B":"≥80，＜70","C":"≥90，＜70","D":"≥75，＜70"},"answer":"B"},{"num":293,"type":"单选","question":"发变组冷备用状态规定：发变组开关在断开状态，发变组出口刀闸已合上，发电机励 磁开关在断开状态，励磁系统处在励磁开关一经合闸即可输出励磁电流状态。（）","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":294,"type":"多选","question":"防止误入带电间隔（）","options":{"A":"配电室、变压器室及遮栏应加锁锁住；钥匙除按规定外，不允许随便借出或私自配 制","B":"凡容易造成误入的带电间隔，必须悬挂醒目的警告牌","C":"运行人员在进行高压设备巡视时，不得移开或越过遮栏；巡视配电装置，进出高压 室，必须随手将门锁好","D":"6KV开关柜后门的防误功能必须完好，运行人员在打开6KV开关柜后门时不得随意 强行解锁。 E、 E.若需在某间隔内进行停电检修工作时，该间隔内必须停电"},"answer":"A|B|C|D|"},{"num":295,"type":"单选","question":"我厂#5、#6发电机定子冷却水流量（）。","options":{"A":"105t/h","B":"110t/h","C":"115t/h","D":"120t/h"},"answer":"D"},{"num":296,"type":"多选","question":"厂用电部分中断现象有（）。","options":{"A":"事故报警","B":"故障段母线电源开关跳闸，备用电源开关未自投或自投不成功，母线电压指示到零 ","C":"故障段母线运行辅机跳闸，6KV备用辅机自启动","D":"对应的380 P"},"answer":"A|B|C|D|"},{"num":297,"type":"判断","question":"发电机定子水流量低于96m3/h(三取二)发断水保护，作用于跳闸（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":298,"type":"多选","question":"干式变压器检查项目（）。","options":{"A":"变压器温度控制装置温度指示正常，无绕组温度高报警信号","B":"变压器周围环境温度无过高，冷却风扇运转情况与线圈温度相对应","C":"无异声、焦臭、变色和异常振动情况","D":"变压器周围无漏水，外表清洁完好。 E、 E.变压器柜前、后门应关闭"},"answer":"A|B|C|D|"},{"num":299,"type":"判断","question":"我厂#5、#6发电机额定定子电压27kV。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":300,"type":"多选","question":"发电机过负荷现象有（）。","options":{"A":"发电机定子三相电流、转子电流超过额定值","B":"“发电机对称过负荷”报警","C":"发电机风温升高","D":"发电机对称过负荷保护定时限保护动作于减负荷，反时限动作于跳闸。 E、 E.发电机定子绕组、定子水管出水等温度升高"},"answer":"A|B|C|D|"},{"num":301,"type":"单选","question":"我厂#5、#6发电机额定励磁电压Ufn（）。","options":{"A":"427V","B":"447V","C":"437V","D":"457V"},"answer":"C"},{"num":302,"type":"判断","question":"电缆沟应保持清洁，不积粉尘、不积水，安全电压的照明充足，禁止堆 放杂物。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":303,"type":"单选","question":"6kV母线电压低限（）kV。","options":{"A":"5.7","B":"6.3","C":"6.6","D":"6"},"answer":"A"},{"num":304,"type":"判断","question":"柴油发电机轴承温升＜50℃。（ ）（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":305,"type":"单选","question":"如发电机直流密封油泵投运不成功，则紧急排氢，维持发电机内压力（ ）kPa，用二氧化碳进行置换。","options":{"A":"大于50","B":"小于50","C":"大于30","D":"小于30"},"answer":"D"},{"num":306,"type":"判断","question":"检查变频室的通风、照明良好，通风设备能够正常运转，变频器温度小 于62℃（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":307,"type":"单选","question":"检查变压器运行正常无异常的鸣叫或怪味，保证变压器的线圈温升不超 过限值（）。","options":{"A":"50K","B":"40K","C":"60K","D":"80K"},"answer":"D"},{"num":308,"type":"单选","question":"电动机在额定出力运行时，相间电压的不平衡，不得超过（）%。","options":{"A":"20","B":"15","C":"10","D":"5"},"answer":"D"},{"num":309,"type":"单选","question":"高厂变油温保护跳闸值（）℃。","options":{"A":"105","B":"115","C":"85","D":"95"},"answer":"D"},{"num":310,"type":"单选","question":"高厂变油温高限（）℃。","options":{"A":"85","B":"115","C":"105","D":"95"},"answer":"A"},{"num":311,"type":"单选","question":"主变压器任一冷却器确定为“辅助冷却器控制”时，送上电源后，当主变负荷达到 （）时或主变上层油温达到（），该组冷却器油泵和冷却风扇自动投入运行。","options":{"A":"70%（电流>878","B":"80%（电流>878","C":"70%（电流>878","D":"80%（电流>878"},"answer":"A"},{"num":312,"type":"多选","question":"加强运行维护管理措施有（）。","options":{"A":"应经常巡查设备，发现问题及时联系处理","B":"加强保护的定期检查，保证保护压板加用正确，动作正确","C":"全厂交直流保险应按规定配备使用，保证在事故情况下保险不越级中断","D":"加强#03启备变及其高压侧配电装置的的巡视工作，保证#03启备变处于正常热备用 状态。 E、 E.做好蓄电池的维护工作，每小时对直流系统检查抄表一次，及时调整硅整流装置的 输出，使蓄电池处于完好状态"},"answer":"A|B|C|D|"},{"num":313,"type":"多选","question":"防止带接地线合断路器（刀闸）（）","options":{"A":"接地线（接地刀闸）与断路器（刀闸）之间有强制闭锁的，在进行断路器（刀闸） 的操作时，不允许解除闭锁","B":"设备送电前，应到现场检查安全措施是否拆除；在检查接地线是否拆除时，必须逐 相检查，不准遗漏","C":"对6KV开关柜内接地刀闸的状态，应以开关柜后门窥视窗口检查的状态为准","D":"设备检修完毕送电前，必须到电源接引处、设备就地的电缆鼻子处检查，是否有为 检修安全用的电源短接线未拆除。若有，必须拆除后方可送电操作。 E、 E.交班应查看接地线装拆登记本，必须做到登记的已拆除的接地线总数与接地线存放 处存放的接地线的总数一致；不允许将携带型接地线乱扔在现场。 F、 F.户内携带型接地线的封装应将接地线的接地端子设置在明显处"},"answer":"A|B|C|D|"},{"num":314,"type":"单选","question":"夏季运行方式氢气露点控制在（）℃。","options":{"A":"-15~-25","B":"-5~-25","C":"-25~-40","D":"-20~-35"},"answer":"B"},{"num":315,"type":"多选","question":"下列属于发电机的运行方式的是（）。","options":{"A":"发电机可按照制造厂铭牌规定的数据，在发电机出力曲线的范围内长期连续运行","B":"发电机运行电压的变动范围在额定电压的±5％以内而功率因数为额定值时，其额定 容量不变","C":"频率变动的范围，不超过±0.5Hz时，发电机可按额定容量运行","D":"发电机的功率因数按调度下发的运行规定值控制，当发电机进相运行，吸收系统无 功功率，励磁电流较小。 E、 E.发电机处于低励情况下运行，此时励磁系统主控制器中的低励限制装置应可靠投入 运行"},"answer":"A|B|C|D|"},{"num":316,"type":"单选","question":"#5、6机C高压厂用工作变压器冷却风扇投“自动”时，当厂总变负荷（）或 厂总变顶层油温（），辅助冷却风扇自动停止运行。","options":{"A":"小于55%（电流<337","B":"小于50%（电流<337","C":"小于55%（电流<337","D":"小于50%（电流<337"},"answer":"B"},{"num":317,"type":"判断","question":"电流互感器、电压互感器着火时，立即用开关断开其电源，并将手车式 电压互感器柜直接拉开断电。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":318,"type":"单选","question":"定子绕组进水压力高限（）kPa。","options":{"A":"440","B":"200","C":"300","D":"100"},"answer":"A"},{"num":319,"type":"单选","question":"发电机转子线圈温度正常范围（）℃。","options":{"A":">110","B":">100","C":"＜100","D":"＜110"},"answer":"D"},{"num":320,"type":"单选","question":"密封油/氢气差压低限（）kPa。","options":{"A":"120","B":"110","C":"115","D":"80"},"answer":"D"},{"num":321,"type":"多选","question":"发电机过负荷原因有（）。","options":{"A":"","B":"强励动作造成发电机定子过电流","C":"发电机机端电压过低，造成发电机额定功率运行时电流超限","D":""},"answer":"A|B|C|D|"},{"num":322,"type":"单选","question":"#5、6机A高压厂用变压器冷却风扇投“自动”时,当厂总变负荷（）或厂总 变顶层油温()，辅助冷却风扇自动停止运行。","options":{"A":"小于55%（电流<535","B":"小于55%（电流<535","C":"小于50%（电流<535","D":"小于50%（电流<535"},"answer":"D"},{"num":323,"type":"多选","question":"发电机碳刷打火原因有（）。","options":{"A":"碳刷与滑环接触不良","B":"各碳刷的电流分配不均匀","C":"碳刷和刷辫、刷辫和刷架间的连接松动，发生局部火花","D":"弹簧与碳刷间失去绝缘，弹簧因流过电流而发热变软、失去弹性。 E、 E.使用碳刷型号不符合要求或更换的碳刷型号不一致"},"answer":"A|B|C|D|"},{"num":324,"type":"单选","question":"密封油温高限（）℃。","options":{"A":"50","B":"45","C":"35","D":"30K"},"answer":"A"},{"num":325,"type":"单选","question":"220KV电缆额定电压（Uo/U）（）。","options":{"A":"137/220kV","B":"127/222kV","C":"121/220kV","D":"127/220kV"},"answer":"D"},{"num":326,"type":"单选","question":"高厂变油温正常范围允许温升（）。","options":{"A":"30K","B":"45K","C":"50K","D":"60K"},"answer":"C"},{"num":327,"type":"判断","question":"电动机在额定出力运行时，相间电压的不平衡，不得超过10%。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":328,"type":"单选","question":"我厂#5、#6发电机额定励磁电流Ifn（）。","options":{"A":"5187","B":"5777","C":"5887","D":"5787"},"answer":"C"},{"num":329,"type":"判断","question":"确认系统各设备运行正常，仪用气、杂用气系统各参数符合要求，仪用 气压力0.55～0.80MPa左右，干燥机后露点温度≤-40℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":330,"type":"单选","question":"频率变动的范围，不超过（）Hz时，发电机可按额定容量运行。","options":{"A":"±0.5","B":"±1","C":"±2","D":"±2.5"},"answer":"A"},{"num":331,"type":"判断","question":"变压器冷却方式为强迫油循环风冷时，最高上层油温为90℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":332,"type":"多选","question":"电动机绕组温度高原因有（）。","options":{"A":"电动机冷却不良","B":"辅机超负荷运行","C":"匝间短路","D":"二相运行。 E、 E.转子回路开路"},"answer":"A|B|C|D|"},{"num":333,"type":"多选","question":"发变组跳闸的原因有（）。","options":{"A":"发变组保护动作跳闸","B":"机、炉保护动作由热工保护动作跳闸","C":"500KV线路故障引起发电机过电流等越级跳闸","D":"系统稳控装置动作切机跳闸。 E、 E.误触、误碰、误操作或误动造成"},"answer":"A|C|D|"},{"num":334,"type":"判断","question":"断路器或隔离开关闭锁回路严禁用重动继电器，应直接用断路器或隔离 开关的辅助触点（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":335,"type":"单选","question":"发电机氢温控制投入自动，以定冷水温度为基准，控制冷氢温度低于定 冷水温约（）。","options":{"A":"5℃","B":"15℃","C":"10℃","D":"25℃"},"answer":"A"},{"num":336,"type":"判断","question":"密封油/氢气差压正常值120kPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":337,"type":"单选","question":"高厂变绕组温度保护跳闸值（）℃。","options":{"A":"85","B":"120","C":"95","D":"105"},"answer":"B"},{"num":338,"type":"多选","question":"灭火方法、使用器材及注意事项有（）。","options":{"A":"未浸油类的杂物着火时，可用水，泡沫灭火器，沙子等灭火","B":"浸有油类的杂物着火时，可用水，泡沫灭火器，沙子等灭火","C":"带电设备着火时，应切断电源后用","D":"蒸汽管道或其它高温部件着火，应用泡沫灭火器灭火，不准用"},"answer":"A|C|"},{"num":339,"type":"判断","question":"油箱或其它容器内的油着火时，可用沙子、泡沫灭火器、CO2、CCl4、12 11灭火器灭火，必要时可用湿布扑灭或隔绝空气（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":340,"type":"单选","question":"500KV断路器额定电流（）。","options":{"A":"3000","B":"5000","C":"3500","D":"4000"},"answer":"D"},{"num":341,"type":"判断","question":"SF6断路器的压力参数(表压)报警气压0.62MPa（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":342,"type":"判断","question":"机组正常运行时，发电机氢温控制投自动，以定冷水进水温度为基准， 控制冷氢温度低于定冷水进水温度约5℃。（） A、 正确B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":343,"type":"单选","question":"启/备变油温保护跳闸值（）℃。","options":{"A":"115","B":"95","C":"85","D":"105"},"answer":"B"},{"num":344,"type":"单选","question":"6kV母线电压正常值（）kV。","options":{"A":"7","B":"6","C":"6.6","D":"5.7"},"answer":"B"},{"num":345,"type":"多选","question":"变压器正常维护与定期试验（）。","options":{"A":"化学人员应定期做好变压器绝缘油的色谱分析检查，每月15号应进行变压器铁芯接 地电流的检测工作","B":"定期对主变、高厂变及#03启/备变的冷却器及其电源进行启动或切换试验","C":"当变压器硅胶颜色由蓝白色变为粉红色时，应通知检修更换","D":"变压器在运行中滤油、补油、换潜油泵或更换净油器的吸附剂时，应将其重瓦斯改 接信号，此时其它保护装置仍应接跳闸。 E、 E.主变在线监测仪停电4小时以上时，通知检修人员对其进行隔离"},"answer":"B|C|D|"},{"num":346,"type":"判断","question":"无论地刀是否投入，设备送电前，必须检查接地刀闸确已拉开。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":347,"type":"多选","question":"电动机在运行中应监视有（）。","options":{"A":"电动机的电流是否超过允许值，超过时应报告机组长，并根据其指示采取措施","B":"检查轴承的润滑油及温度是否正常","C":"电动机的声音有无异常，有无焦臭味","D":"电动机及其周围温度不超过规定，保持电动机附近清洁，检修人员应定期清扫电动机。 E、 E.按时记录电动机表计的读数、电动机启停时间及原因，并记录所发现的一切异常现 象"},"answer":"A|B|C|D|"},{"num":348,"type":"单选","question":"发电机额定功率正常值（）MW。","options":{"A":"1000","B":"1112","C":"1200","D":"1050"},"answer":"A"},{"num":349,"type":"单选","question":"发电机运行电压的变化范围应在额定值（）％以内。","options":{"A":"±10","B":"±20","C":"±15","D":"±5"},"answer":"D"},{"num":350,"type":"单选","question":"6kV母线电压高限（）kV。","options":{"A":"6.6","B":"6.3","C":"5.7","D":"6"},"answer":"A"},{"num":351,"type":"单选","question":"变压器冷却方式为强迫油循环风冷或自然油循环风冷时，顶层油温升（ ）。","options":{"A":"60L","B":"40K","C":"50K","D":"70K"},"answer":"C"},{"num":352,"type":"单选","question":"冷氢温度正常值（）℃。","options":{"A":"84","B":"53","C":"48","D":"43"},"answer":"D"},{"num":353,"type":"多选","question":"火灾原因有（）。","options":{"A":"汽机油系统、燃油系统、辅机油系统等泄漏","B":"制粉系统爆炸或自燃","C":"变压器或互感器故障","D":"氢系统泄漏。 E、 E.电气设备短路"},"answer":"A|B|C|D|"},{"num":354,"type":"多选","question":"转机紧急停运条件有（）。","options":{"A":"转机运行中出现异常，影响人身或设备安全时","B":"泵、风机、电动机动静磨擦，发生强烈振动","C":"泵、风机、电动机轴承断油或冒烟","D":"轴承温度超限。 E、 E.电动机的电源电缆、接线盒内有明显的短路或损坏危险时。 F、 F.发生危及设备安全运行的其它故障时"},"answer":"A|B|C|D|"},{"num":355,"type":"判断","question":"凡电气操作，必须有监护人（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":356,"type":"多选","question":"6kV小车开关的状态规定有（）。","options":{"A":"运行状态：小车开关在“工作”位置， 直流控制电源小开关合上，控制回路二次插头在连接位置，开关在合闸状态，各保 护均投运","B":"热备用状态：与运行状态仅区别于开关在分闸状态","C":"冷备用状态：开关在分闸状态，小车开关在试验位置，直流控制电源小开关断开， 控制回路二次插头在“连接”位置","D":"检修状态：开关在分闸状态，开关本体在开关柜外，直流控制电源小开关断开，控 制回路二次插头在拔出位置，同时根据检修工作需要增补其它安全措施"},"answer":"A|B|C|D"},{"num":357,"type":"单选","question":"发电机额定电压高限（）kV。","options":{"A":"28","B":"28.35","C":"29","D":"27.35"},"answer":"B"},{"num":358,"type":"判断","question":"正常情况下，允许冷态（电动机本身温度60℃及以下）下启动1次，允许 热态（电动机本身温度60℃以上）下启动2次。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"}]}.questions;
+  document.getElementById('loadingIndicator').style.display = 'none';
+  initApp();
+}
+
+// ============ Init ============
+function initApp() {
+  // Load saved progress
+  loadProgress();
+
+  currentQuestions = [...allQuestions];
+  currentIndex = 0;
+  updateStats();
+  renderQuestion();
+}
+
+// ============ Progress persistence ============
+function saveProgress() {
+  try {
+    const data = { answeredMap, wrongSet: [...wrongSet] };
+    localStorage.setItem('quiz_progress', JSON.stringify(data));
+  } catch(e) { /* ignore */ }
+}
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem('quiz_progress');
+    if (raw) {
+      const data = JSON.parse(raw);
+      answeredMap = data.answeredMap || {};
+      wrongSet = new Set(data.wrongSet || []);
+    }
+  } catch(e) { /* ignore */ }
+}
+
+function resetProgress() {
+  if (!confirm('确定要重置所有答题进度吗？')) return;
+  answeredMap = {};
+  wrongSet = new Set();
+  saveProgress();
+  updateStats();
+  renderQuestion();
+}
+
+// ============ Render ============
+function renderQuestion() {
+  const area = document.getElementById('questionArea');
+  const qs = currentMode === 'test' ? testQuestions : currentQuestions;
+
+  if (!qs || qs.length === 0) {
+    area.innerHTML = `<div class="no-questions">
+      ${currentMode === 'wrong' ? '🎉 没有错题！继续保持！' : '📭 当前没有符合条件的题目'}
+    </div>`;
+    document.querySelector('.nav-buttons').style.display = 'none';
+    return;
+  }
+
+  if (currentIndex >= qs.length) currentIndex = 0;
+  if (currentIndex < 0) currentIndex = qs.length - 1;
+
+  document.querySelector('.nav-buttons').style.display = 'flex';
+
+  const q = qs[currentIndex];
+  const idx = allQuestions.indexOf(q);
+  const isAnswered = idx in answeredMap;
+  const result = answeredMap[idx];
+  const isWrong = wrongSet.has(idx);
+
+  // Update progress bar
+  updateProgress();
+
+  // Build question HTML
+  const isMulti = q.type === '多选';
+  const typeClass = isMulti ? 'multi' : q.type === '单选' ? 'single' : 'judge';
+
+  let isMultiPending = false;
+  let statusText, statusClass;
+
+  if (isAnswered && result) {
+    if (result.revealed) {
+      statusText = '👁 已查看';
+      statusClass = 'pending';
+    } else {
+      statusText = result.correct ? '✅ 正确' : '❌ 错误';
+      statusClass = result.correct ? 'correct' : 'wrong';
+    }
+  } else if (isMulti && !isAnswered && answeredMap[idx] && answeredMap[idx].selected) {
+    isMultiPending = true;
+    statusText = '✏️ 待确认';
+    statusClass = 'pending';
+  } else {
+    statusText = '⏳ 未答';
+    statusClass = 'pending';
+  }
+
+  // For multi select, determine selected keys
+  let selectedKeys = [];
+  if (isMulti && answeredMap[idx]) {
+    selectedKeys = answeredMap[idx].selected ? answeredMap[idx].selected.split('') : [];
+  }
+
+  let html = `
+    <div class="question-card">
+      <div class="q-header">
+        <span class="q-number">#${q.num}</span>
+        <span class="q-type ${typeClass}">${q.type}</span>
+        <span class="q-status ${statusClass}">${statusText}</span>
+      </div>
+      <div class="q-text">${escapeHtml(q.question)}</div>
+      <div class="options" data-idx="${idx}">
+  `;
+
+  const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const wasRevealed = isAnswered && result && !result.revealed;
+  const isRevealedMode = isAnswered && result && result.revealed;
+
+  for (const key of letters) {
+    if (!(key in q.options)) continue;
+    const val = q.options[key];
+    if (!val) continue;
+
+    let optClass = '';
+
+    if (wasRevealed) {
+      optClass += ' revealed';
+      const wasSelected = result.selected && result.selected.includes(key);
+      const isCorrectAnswer = q.answer.toUpperCase().includes(key);
+
+      if (wasSelected && isCorrectAnswer) optClass += ' correct-answer';
+      else if (wasSelected && !isCorrectAnswer) optClass += ' wrong-answer';
+      else if (!wasSelected && isCorrectAnswer) optClass += ' correct-answer';
+    } else if (isRevealedMode && q.answer.toUpperCase().includes(key)) {
+      optClass += ' revealed correct-answer';
+    } else if (isMultiPending && selectedKeys.includes(key)) {
+      optClass += ' selected';
+    }
+
+    const letterDisplay = isMulti && !wasRevealed
+      ? (selectedKeys.includes(key) ? '✓' : key)
+      : key;
+
+    html += `
+      <div class="option${optClass}" data-key="${key}" data-idx="${idx}">
+        <span class="letter">${letterDisplay}</span>
+        <span>${escapeHtml(val)}</span>
+      </div>
+    `;
+  }
+
+  html += '</div>';
+
+  // Multi-select confirm button
+  if (isMulti && !wasRevealed) {
+    const hasSelection = selectedKeys.length > 0;
+    html += `
+      <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-success btn-sm" id="confirmMultiBtn" ${!hasSelection ? 'disabled' : ''}>
+          ✅ 确认提交
+        </button>
+        ${hasSelection
+          ? `<span style="font-size:12px;color:var(--text-secondary);">已选 ${selectedKeys.join(', ')}</span>
+             <button class="btn btn-sm" id="clearMultiBtn">清除</button>`
+          : '<span style="font-size:12px;color:var(--text-secondary);">请选择所有正确选项</span>'}
+      </div>
+    `;
+  }
+
+  // Feedback
+  if (isRevealedMode) {
+    html += `
+      <div class="feedback show right">
+        <span class="fb-icon">👁</span>
+        已显示答案：<strong>${q.answer}</strong>
+        <span style="font-size:12px;color:var(--text-secondary);margin-left:8px;">（点击选项可继续作答）</span>
+      </div>
+    `;
+  } else if (wasRevealed) {
+    html += `
+      <div class="feedback show ${result.correct ? 'right' : 'wrong'}">
+        <span class="fb-icon">${result.correct ? '✅' : '❌'}</span>
+        ${result.correct ? '回答正确！' : `回答错误，正确答案是：<strong>${q.answer}</strong>`}
+      </div>
+    `;
+  }
+
+  html += '</div>';
+  area.innerHTML = html;
+
+  // Attach click handlers to options
+  if (isRevealedMode) {
+    // In revealed mode, clicking an option records the real answer
+    area.querySelectorAll('.option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        delete answeredMap[idx];
+        handleAnswer(parseInt(opt.dataset.idx), opt.dataset.key);
+      });
+    });
+  } else if (!wasRevealed) {
+    area.querySelectorAll('.option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        handleAnswer(parseInt(opt.dataset.idx), opt.dataset.key);
+      });
+    });
+    if (isMulti && document.getElementById('confirmMultiBtn')) {
+      document.getElementById('confirmMultiBtn').addEventListener('click', () => {
+        confirmMultiAnswer(idx);
+      });
+      document.getElementById('clearMultiBtn')?.addEventListener('click', () => {
+        delete answeredMap[idx];
+        saveProgress();
+        renderQuestion();
+      });
+    }
+  }
+
+  // Update nav button states
+  document.getElementById('prevBtn').disabled = currentIndex <= 0;
+  document.getElementById('nextBtn').disabled = currentIndex >= qs.length - 1;
+
+  // Scroll to top of card
+  document.querySelector('.question-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Update wrong toggle
+  updateWrongToggle();
+}
+
+function handleAnswer(qIdx, selectedKey) {
+  const q = allQuestions[qIdx];
+  if (!q) return;
+
+  let isCorrect;
+  let selected = selectedKey;
+
+  if (q.type === '多选') {
+    // Multi-select: toggle selection
+    if (!answeredMap[qIdx]) {
+      answeredMap[qIdx] = { selected: '', correct: false };
+    }
+    const current = answeredMap[qIdx];
+    if (current.selected === '?') current.selected = '';
+
+    let keys = current.selected ? current.selected.split('') : [];
+    if (keys.includes(selectedKey)) {
+      keys = keys.filter(k => k !== selectedKey);
+    } else {
+      keys.push(selectedKey);
+      keys.sort();
+    }
+    current.selected = keys.join('');
+    // Don't auto-judge multi-select - user needs to confirm
+    // We'll judge when they click again or a "confirm" action
+    saveProgress();
+    updateStats();
+    renderQuestion();
+    return;
+  }
+
+  const correct = q.answer.toUpperCase() === selectedKey.toUpperCase();
+  answeredMap[qIdx] = { selected: selectedKey, correct };
+
+  if (correct) {
+    wrongSet.delete(qIdx);
+  } else {
+    wrongSet.add(qIdx);
+  }
+
+  saveProgress();
+  updateStats();
+  renderQuestion();
+}
+
+function confirmMultiAnswer(qIdx) {
+  const q = allQuestions[qIdx];
+  if (!q || q.type !== '多选') return;
+  const entry = answeredMap[qIdx];
+  if (!entry || !entry.selected) return;
+
+  const userAns = entry.selected.split('').sort().join('');
+  const correctAns = q.answer.toUpperCase().split('').sort().join('');
+  entry.correct = userAns === correctAns;
+
+  if (entry.correct) {
+    wrongSet.delete(qIdx);
+  } else {
+    wrongSet.add(qIdx);
+  }
+
+  saveProgress();
+  updateStats();
+  renderQuestion();
+}
+
+function showCurrentAnswer() {
+  const area = document.getElementById('questionArea');
+  const qs = currentMode === 'test' ? testQuestions : currentQuestions;
+  if (!qs.length || currentIndex >= qs.length) return;
+
+  const q = qs[currentIndex];
+  const idx = allQuestions.indexOf(q);
+  if (idx in answeredMap) return; // already answered
+
+  // Show the correct answer using revealed flag (not marked wrong)
+  answeredMap[idx] = { selected: 'REVEALED', correct: true, revealed: true };
+  saveProgress();
+  updateStats();
+  renderQuestion();
+}
+
+// ============ Stats ============
+function updateStats() {
+  const total = allQuestions.length;
+  const answered = Object.keys(answeredMap).length;
+  const correct = Object.values(answeredMap).filter(v => v.correct).length;
+  const wrong = answered - correct;
+  const acc = answered > 0 ? Math.round(correct / answered * 100) : 0;
+
+  document.getElementById('totalCount').textContent = total;
+  document.getElementById('answeredCount').textContent = answered;
+  document.getElementById('correctCount').textContent = correct;
+  document.getElementById('wrongCount').textContent = wrong;
+  document.getElementById('accuracy').textContent = acc + '%';
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statAnswered').textContent = answered;
+  document.getElementById('statCorrect').textContent = correct;
+  document.getElementById('statWrong').textContent = wrong;
+
+  // Filter counts
+  const singleCount = allQuestions.filter(q => q.type === '单选').length;
+  const judgeCount = allQuestions.filter(q => q.type === '判断').length;
+  const multiCount = allQuestions.filter(q => q.type === '多选').length;
+
+  updateProgress();
+  updateWrongToggle();
+}
+
+function updateProgress() {
+  const qs = currentMode === 'test' ? testQuestions : currentQuestions;
+  if (!qs.length) { document.getElementById('progressFill').style.width = '0%'; return; }
+  const done = qs.filter(q => allQuestions.indexOf(q) in answeredMap).length;
+  const pct = Math.round(done / qs.length * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function updateWrongToggle() {
+  const btn = document.getElementById('wrongToggleBtn');
+  const badge = document.getElementById('wrongBadge');
+  const count = wrongSet.size;
+  if (count > 0) {
+    btn.style.display = 'block';
+    badge.textContent = count;
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+// ============ Mode switching ============
+function switchMode(mode) {
+  currentMode = mode;
+  currentIndex = 0;
+
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.mode === mode);
+  });
+
+  document.getElementById('browseToolbar').style.display = mode === 'browse' ? 'flex' : 'none';
+  document.getElementById('testConfig').style.display = mode === 'test' ? 'block' : 'none';
+
+  if (mode === 'browse') {
+    applyFilter();
+  } else if (mode === 'test') {
+    testQuestions = [];
+    document.getElementById('questionArea').innerHTML =
+      `<div class="test-config" style="box-shadow:none;padding:0;"><p style="color:var(--text-secondary);text-align:center;padding:40px 0;">设置参数后点击"开始考试"</p></div>`;
+    document.querySelector('.nav-buttons').style.display = 'none';
+  } else if (mode === 'wrong') {
+    // Show wrong questions
+    const wrongQuestions = allQuestions.filter((q, i) => wrongSet.has(i));
+    if (wrongQuestions.length === 0) {
+      document.getElementById('questionArea').innerHTML =
+        `<div class="no-questions">🎉 没有错题！继续保持！</div>`;
+      document.querySelector('.nav-buttons').style.display = 'none';
+      return;
+    }
+    currentQuestions = wrongQuestions;
+    renderQuestion();
+  }
+  updateStats();
+}
+
+// ============ Filter ============
+let currentFilter = 'all';
+
+function applyFilter() {
+  const type = currentFilter;
+  if (type === 'all') {
+    currentQuestions = [...allQuestions];
+  } else {
+    currentQuestions = allQuestions.filter(q => q.type === type);
+  }
+  currentIndex = 0;
+  renderQuestion();
+  updateStats();
+}
+
+// ============ Shuffle ============
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function shuffleQuestions() {
+  shuffleArray(currentQuestions);
+  currentIndex = 0;
+  renderQuestion();
+  updateStats();
+}
+
+// ============ Test mode ============
+function startTest() {
+  const type = document.getElementById('testType').value;
+  let count = parseInt(document.getElementById('testCount').value) || 20;
+
+  let pool = type === 'all' ? [...allQuestions] : allQuestions.filter(q => q.type === type);
+
+  if (pool.length === 0) {
+    alert('没有符合条件的题目');
+    return;
+  }
+
+  count = Math.min(count, pool.length);
+
+  // Shuffle and pick
+  shuffleArray(pool);
+  testQuestions = pool.slice(0, count);
+  currentIndex = 0;
+  switchMode('test');
+  renderQuestion();
+  document.querySelector('.nav-buttons').style.display = 'flex';
+
+  // Update config area to show test info
+  document.getElementById('testConfig').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <div>
+        <strong style="font-size:16px;">📝 考试模式</strong>
+        <span style="color:var(--text-secondary);margin-left:12px;">
+          ${type === 'all' ? '全部' : type} · ${testQuestions.length}题
+        </span>
+      </div>
+      <button class="btn btn-outline btn-sm" id="resetTestBtn">重新设置</button>
+    </div>
+  `;
+  document.getElementById('resetTestBtn').addEventListener('click', () => {
+    resetTestConfig();
+  });
+}
+
+function resetTestConfig() {
+  document.getElementById('testConfig').innerHTML = `
+    <h3>考试模式设置</h3>
+    <div class="form-row">
+      <label>题目类型</label>
+      <select id="testType">
+        <option value="all">全部</option>
+        <option value="单选">单选</option>
+        <option value="判断">判断</option>
+        <option value="多选">多选</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>题目数量</label>
+      <input type="number" id="testCount" value="20" min="1" max="200">
+      <button class="btn btn-success" id="startTestBtn">开始考试</button>
+    </div>
+  `;
+  document.getElementById('startTestBtn').addEventListener('click', startTest);
+  document.getElementById('questionArea').innerHTML =
+    `<div class="no-questions" style="padding:20px 0;">设置参数后点击"开始考试"</div>`;
+  document.querySelector('.nav-buttons').style.display = 'none';
+}
+
+// ============ Utility ============
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ============ Event Bindings ============
+document.addEventListener('DOMContentLoaded', () => {
+  loadQuestions();
+
+  // Mode tabs
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchMode(tab.dataset.mode));
+  });
+
+  // Filter buttons
+  document.querySelectorAll('[data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      applyFilter();
+    });
+  });
+
+  // Navigation
+  document.getElementById('prevBtn').addEventListener('click', () => {
+    const qs = currentMode === 'test' ? testQuestions : currentQuestions;
+    if (currentIndex > 0) currentIndex--;
+    renderQuestion();
+  });
+
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    const qs = currentMode === 'test' ? testQuestions : currentQuestions;
+    if (currentIndex < qs.length - 1) currentIndex++;
+    renderQuestion();
+  });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (e.key === 'ArrowLeft') document.getElementById('prevBtn').click();
+    if (e.key === 'ArrowRight') document.getElementById('nextBtn').click();
+    if (e.key === 'a' || e.key === 'A') {
+      const opt = document.querySelector('.option[data-key="A"]');
+      if (opt && !opt.classList.contains('revealed')) opt.click();
+    }
+    if (e.key === 'b' || e.key === 'B') {
+      const opt = document.querySelector('.option[data-key="B"]');
+      if (opt && !opt.classList.contains('revealed')) opt.click();
+    }
+    if (e.key === 'c' || e.key === 'C') {
+      const opt = document.querySelector('.option[data-key="C"]');
+      if (opt && !opt.classList.contains('revealed')) opt.click();
+    }
+    if (e.key === 'd' || e.key === 'D') {
+      const opt = document.querySelector('.option[data-key="D"]');
+      if (opt && !opt.classList.contains('revealed')) opt.click();
+    }
+  });
+
+  // Shuffle
+  document.getElementById('shuffleBtn').addEventListener('click', shuffleQuestions);
+
+  // Show answer
+  document.getElementById('showAnswerBtn').addEventListener('click', showCurrentAnswer);
+
+  // Start test
+  document.getElementById('startTestBtn').addEventListener('click', startTest);
+
+  // Wrong questions button
+  document.getElementById('wrongBtn').addEventListener('click', () => {
+    switchMode('wrong');
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.mode === 'wrong');
+    });
+    document.getElementById('browseToolbar').style.display = 'none';
+    document.getElementById('testConfig').style.display = 'none';
+  });
+
+  // Reset progress
+  document.getElementById('resetProgressBtn').addEventListener('click', resetProgress);
+
+  // Scroll to top
+  document.getElementById('scrollTop').addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  window.addEventListener('scroll', () => {
+    document.getElementById('scrollTop').classList.toggle('show', window.scrollY > 300);
+  });
+
+  // Reset progress via keyboard: hold Shift + click on header
+  document.querySelector('.app-header h1').addEventListener('click', (e) => {
+    if (e.shiftKey) resetProgress();
+  });
+});
+</script>
+</body>
+</html>

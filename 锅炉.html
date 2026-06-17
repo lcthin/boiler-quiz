@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#4f6ef7">
+<link rel="manifest" href="/manifest.json">
+<title>锅炉题库刷题系统</title>
+<style>
+  :root {
+    --primary: #4f6ef7;
+    --primary-hover: #3b56d9;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .app-header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .app-header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .app-header h1 small {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-secondary);
+  }
+  .header-stats {
+    display: flex;
+    gap: 20px;
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+  }
+  .header-stats span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .header-stats .num { font-weight: 600; color: var(--text); }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 20px 16px 80px;
+  }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+  }
+  .toolbar .filter-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    color: var(--text);
+  }
+  .btn:hover { background: #f8fafc; }
+  .btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .btn.active:hover { background: var(--primary-hover); }
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-success {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+  }
+  .btn-danger {
+    background: var(--danger);
+    color: white;
+    border-color: var(--danger);
+  }
+  .btn-warning {
+    background: var(--warning);
+    color: white;
+    border-color: var(--warning);
+  }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-outline {
+    background: transparent;
+    color: var(--primary);
+    border-color: var(--primary);
+  }
+  .btn-outline:hover { background: var(--primary); color: white; }
+
+  .toolbar-right {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .progress-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #818cf8);
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  /* Question card */
+  .question-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    margin-bottom: 16px;
+    transition: box-shadow 0.2s;
+  }
+  .question-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .q-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .q-number {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-secondary);
+    min-width: 36px;
+  }
+  .q-type {
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .q-type.single { background: #dbeafe; color: #1d4ed8; }
+  .q-type.multi { background: #fce7f3; color: #be185d; }
+  .q-type.judge { background: #dcfce7; color: #15803d; }
+  .q-status {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .q-status.correct { color: var(--success); }
+  .q-status.wrong { color: var(--danger); }
+  .q-status.pending { color: var(--text-secondary); }
+
+  .q-text {
+    font-size: 16px;
+    line-height: 1.7;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  /* Options */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .option:hover { border-color: #a5b4fc; background: #f8faff; }
+  .option.selected { border-color: var(--primary); background: #eef2ff; }
+  .option.correct-answer { border-color: var(--success); background: #f0fdf4; }
+  .option.wrong-answer { border-color: var(--danger); background: #fef2f2; }
+  .option.revealed { cursor: default; }
+  .option .letter {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .option.selected .letter { background: var(--primary); color: white; }
+  .option.correct-answer .letter { background: var(--success); color: white; }
+  .option.wrong-answer .letter { background: var(--danger); color: white; }
+
+  /* Feedback */
+  .feedback {
+    margin-top: 16px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.right { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+  .feedback.wrong { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+  .feedback .fb-icon { font-weight: 700; font-size: 16px; }
+
+  /* Navigation */
+  .nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .nav-buttons .btn { min-width: 100px; justify-content: center; display: flex; align-items: center; gap: 6px; }
+
+  /* Stats panel */
+  .stats-panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .stat-card .stat-value {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .stat-card .stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+  .stat-card .stat-value.blue { color: var(--primary); }
+  .stat-card .stat-value.green { color: var(--success); }
+  .stat-card .stat-value.red { color: var(--danger); }
+  .stat-card .stat-value.yellow { color: var(--warning); }
+
+  /* Tab modes */
+  .mode-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    background: var(--card);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .mode-tab {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+  }
+  .mode-tab:not(:last-child) { border-right: 1px solid var(--border); }
+  .mode-tab:hover { background: #f8fafc; }
+  .mode-tab.active {
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+  }
+
+  /* Test mode */
+  .test-config {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .test-config h3 { margin-bottom: 16px; font-size: 16px; }
+  .test-config .form-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .test-config .form-row label {
+    font-size: 14px;
+    color: var(--text-secondary);
+    min-width: 80px;
+  }
+  .test-config select, .test-config input {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--card);
+  }
+  .test-config input { width: 80px; }
+
+  .no-questions {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+    font-size: 16px;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .container { padding: 10px 8px 80px; }
+    .app-header { padding: 12px 14px; }
+    .app-header h1 { font-size: 17px; }
+    .header-stats { gap: 10px; font-size: 12px; }
+    .question-card { padding: 14px; border-radius: 10px; }
+    .q-text { font-size: 15px; margin-bottom: 14px; }
+    .option { padding: 11px 12px; font-size: 14px; border-radius: 8px; gap: 10px; }
+    .option .letter { width: 24px; height: 24px; font-size: 12px; min-width: 24px; }
+    .toolbar { flex-direction: column; align-items: stretch; gap: 8px; }
+    .toolbar-right { margin-left: 0; }
+    .filter-group { justify-content: center; }
+    .btn { padding: 8px 12px; font-size: 12px; }
+    .nav-buttons { gap: 8px; }
+    .nav-buttons .btn { min-width: 0; flex: 1; font-size: 13px; padding: 10px 8px; }
+    .stats-panel { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat-card { padding: 12px 8px; }
+    .stat-card .stat-value { font-size: 22px; }
+    .stat-card .stat-label { font-size: 11px; }
+    .mode-tab { font-size: 13px; padding: 10px 6px; }
+    .test-config { padding: 16px; }
+    .test-config .form-row { flex-direction: column; align-items: stretch; gap: 8px; }
+    .feedback { font-size: 13px; padding: 10px 14px; }
+    .wrong-toggle { bottom: 14px; left: 14px; }
+    .scroll-top { bottom: 14px; right: 14px; width: 38px; height: 38px; }
+    .q-number { font-size: 12px; min-width: 28px; }
+    .q-status { font-size: 11px; }
+    .q-type { font-size: 10px; padding: 1px 8px; }
+    [data-filter] { flex: 1; text-align: center; }
+  }
+
+  @media (max-width: 400px) {
+    .app-header h1 { font-size: 15px; }
+    .header-stats { gap: 6px; font-size: 11px; }
+    .q-text { font-size: 14px; }
+    .option { padding: 10px 10px; font-size: 13px; }
+    .btn { padding: 7px 10px; font-size: 11px; }
+    .stats-panel { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .stat-card .stat-value { font-size: 18px; }
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .question-card { animation: fadeIn 0.25s ease; }
+
+  /* Scroll to top button */
+  .scroll-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    z-index: 50;
+  }
+  .scroll-top.show { display: flex; }
+  .scroll-top:hover { background: #f8fafc; }
+
+  /* Wrong questions panel */
+  .wrong-toggle {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 50;
+  }
+  .wrong-toggle .btn {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .wrong-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--danger);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    margin-left: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>📚 锅炉题库刷题系统 <small>v1.0</small></h1>
+  <div class="header-stats">
+    <span>总题数: <span class="num" id="totalCount">0</span></span>
+    <span>已答: <span class="num" id="answeredCount">0</span></span>
+    <span>正确: <span class="num" id="correctCount" style="color:var(--success)">0</span></span>
+    <span>错误: <span class="num" id="wrongCount" style="color:var(--danger)">0</span></span>
+    <span>正确率: <span class="num" id="accuracy">0%</span></span>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Mode tabs -->
+  <div class="mode-tabs" id="modeTabs">
+    <button class="mode-tab active" data-mode="browse">📖 刷题模式</button>
+    <button class="mode-tab" data-mode="test">📝 考试模式</button>
+    <button class="mode-tab" data-mode="wrong">❌ 错题集</button>
+  </div>
+
+  <!-- Browse mode toolbar -->
+  <div id="browseToolbar" class="toolbar">
+    <div class="filter-group">
+      <button class="btn active" data-filter="all">全部</button>
+      <button class="btn" data-filter="单选">单选</button>
+      <button class="btn" data-filter="判断">判断</button>
+      <button class="btn" data-filter="多选">多选</button>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn btn-sm" id="shuffleBtn">🔀 随机</button>
+      <button class="btn btn-sm btn-primary" id="showAnswerBtn">👁 显示答案</button>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+    <button class="btn btn-sm" id="resetProgressBtn" style="color:var(--text-secondary);font-size:11px;border-color:transparent;">🗑 清除答题记录</button>
+  </div>
+
+  <!-- Test mode config -->
+  <div id="testConfig" class="test-config" style="display:none;">
+    <h3>考试模式设置</h3>
+    <div class="form-row">
+      <label>题目类型</label>
+      <select id="testType">
+        <option value="all">全部</option>
+        <option value="单选">单选</option>
+        <option value="判断">判断</option>
+        <option value="多选">多选</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>题目数量</label>
+      <input type="number" id="testCount" value="20" min="1" max="200">
+      <button class="btn btn-success" id="startTestBtn">开始考试</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-panel" id="statsPanel">
+    <div class="stat-card">
+      <div class="stat-value blue" id="statTotal">0</div>
+      <div class="stat-label">总题数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value blue" id="statAnswered">0</div>
+      <div class="stat-label">已答题</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value green" id="statCorrect">0</div>
+      <div class="stat-label">正确</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value red" id="statWrong">0</div>
+      <div class="stat-label">错误</div>
+    </div>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress-bar"><div class="fill" id="progressFill" style="width:0%"></div></div>
+
+  <!-- Question area -->
+  <div id="loadingIndicator" style="text-align:center;padding:60px 20px;color:var(--text-secondary);">
+  <div style="font-size:40px;margin-bottom:16px;">📚</div>
+  <div>正在加载题库...</div>
+  <div style="font-size:13px;margin-top:8px;">共 815 道题（单选581 / 判断189 / 多选45）</div>
+</div>
+<div id="questionArea"></div>
+
+  <!-- Navigation -->
+  <div class="nav-buttons">
+    <button class="btn" id="prevBtn">← 上一题</button>
+    <button class="btn" id="nextBtn">下一题 →</button>
+  </div>
+</div>
+
+<!-- Wrong questions floating button -->
+<div class="wrong-toggle" id="wrongToggleBtn" style="display:none;">
+  <button class="btn btn-danger btn-sm" id="wrongBtn">❌ 错题 <span class="wrong-badge" id="wrongBadge">0</span></button>
+</div>
+
+<button class="scroll-top" id="scrollTop">↑</button>
+
+<script>
+// ============ Load Questions ============
+let allQuestions = [];
+let currentQuestions = [];
+let currentIndex = 0;
+let currentMode = 'browse';
+let testQuestions = [];
+let answeredMap = {}; // { index_in_allQuestions: { selected, correct } }
+let wrongSet = new Set(); // indices of wrong answers
+
+async function loadQuestions() {
+  allQuestions = {"total":815,"questions":[{"num":1,"type":"单选","question":"#5、#6锅炉仪用压缩空气母管压力降至（）MPa时，应故障停机。。","options":{"A":"0.35","B":"0.25","C":"0.45","D":"0.55"},"answer":"A"},{"num":2,"type":"判断","question":"另一密封风机运行且密封风母管压力正常（>18kPa）或磨煤机全停，延 时300s时，密封风机停止。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":3,"type":"单选","question":"#5、#6锅炉炉膛压力正常范围（）kPa。","options":{"A":"-0.2","B":"-0.1","C":"-0.3","D":"-0.15"},"answer":"B"},{"num":4,"type":"单选","question":"制粉系统运行时，齿轮箱油池油温正常范围（）℃。","options":{"A":"30~55","B":"30~45","C":"20~45","D":"20~55"},"answer":"B"},{"num":5,"type":"单选","question":"磨煤机推力瓦油温高（），延时3s，磨煤机跳闸。","options":{"A":"＞60℃","B":"＞70℃","C":"＞80℃","D":"＞90℃"},"answer":"B"},{"num":6,"type":"判断","question":"可通过调整每层燃烧器风箱两侧中心风调节挡板及二次风调节挡板开度，调 整油枪的配风，维持油枪投运层的中心风压力在0.37kPa左右。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":7,"type":"判断","question":"当运行风机跳闸或母管压力低于5kPa时，备用火检冷却风机应联动。（ ） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":8,"type":"单选","question":"锅炉热态启动点火前锅炉上水后，控制锅炉给水流量小于（）。","options":{"A":"200t/h","B":"300t/h","C":"400t/h","D":"250t/h"},"answer":"B"},{"num":9,"type":"单选","question":"吹灰系统运行时，高温区长吹吹灰蒸汽温度为（）℃。","options":{"A":"290","B":"365","C":"300","D":"250"},"answer":"A"},{"num":10,"type":"单选","question":"机组负荷降到500MW以下，SCR装置进口烟气温度低于320℃时，通知脱硝值班员停 止喷氨，维持SCR装置吹灰运行直到锅炉MFT后再停止。（）","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":11,"type":"单选","question":"#6炉二次风暖风器运行时，水位到低一值（）mm时，联锁跳闸备用泵。","options":{"A":"100","B":"400","C":"0","D":"700"},"answer":"A"},{"num":12,"type":"判断","question":"空压机的运行维护检查空压机加载时的最大电流不超过50A。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":13,"type":"单选","question":"#6炉引风机轴承温度（）℃时报警。","options":{"A":"≥95","B":"≥90","C":"≥85","D":"≥80"},"answer":"D"},{"num":14,"type":"单选","question":"等离子点火装置二级载体风压力低报警值（）kPa。","options":{"A":"≤10","B":"≤20","C":"≤30","D":"≤40"},"answer":"B"},{"num":15,"type":"单选","question":"当空预器导向轴承润滑油系统的油温达到（）℃时，导向轴承稀油站主油 泵启动。","options":{"A":"55","B":"45","C":"50","D":"60"},"answer":"A"},{"num":16,"type":"判断","question":"#6炉引风机电机轴承温度应＜70℃，≥70℃时报警，当温度达到80℃，延 时5s风机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":17,"type":"判断","question":"#5锅炉主蒸汽压力保护跳闸值30.6Mpa.g。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":18,"type":"单选","question":"#6炉送风机电机电流为（）A。","options":{"A":"278","B":"270","C":"265","D":"280"},"answer":"A"},{"num":19,"type":"单选","question":"汽水分离器的贮水罐水位达（）时，锅炉完成上水。","options":{"A":"12米","B":"","C":"","D":""},"answer":"A"},{"num":20,"type":"判断","question":"停炉4小时后，确认所有关断门关闭到位、炉底渣排净，停运炉底干排渣 系统。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":21,"type":"判断","question":"二次汽水系统为再热器进口工作压力。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":22,"type":"判断","question":"启动一台冷却风机A或B，确认其运行正常，检查出口换向挡板切向停运 侧，检查风机出口母管压力大于6.0Kpa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":23,"type":"单选","question":"不论哪种启动方式，在250MW- 300MW负荷区间，干、湿态转换过程中，尽量保持（）负荷变化率，确 保平稳过度，一次转换成功，禁止往返转换。","options":{"A":"5 MW/min","B":"20MW/min","C":"15 MW/min","D":"10 MW/min"},"answer":"A"},{"num":24,"type":"判断","question":"总煤量230T/H以上可以启动第4台磨煤机；总煤量300T/H以上可以启动第 5台磨煤机。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":25,"type":"单选","question":"空气预热器电动机电压为（）V。","options":{"A":"380","B":"300","C":"350","D":"400"},"answer":"A"},{"num":26,"type":"单选","question":"#5炉二次风暖风器运行时，辅汽供汽时辅汽联箱压力（）MPab)，或五段 抽汽供汽时#5段抽汽压力（）MPa。","options":{"A":">0.4，>0.2","B":">0.5，>0.2","C":">0.4，>0.3","D":">0.5，>0.3"},"answer":"A"},{"num":27,"type":"单选","question":"低温省煤器运行时，声波吹灰器应投入连续运行，并且保证吹灰气源压 力（）MPa。","options":{"A":"≥0.4","B":"≥0.5","C":"≥0.6","D":"≥0.7"},"answer":"A"},{"num":28,"type":"单选","question":"密封风机入口滤网差压正常范围（）kPa。","options":{"A":"＜1.0","B":"＜1.5","C":"＜2.0","D":"＜0.5"},"answer":"A"},{"num":29,"type":"单选","question":"#5锅炉二次热风温度正常范围（）℃。","options":{"A":"329","B":"319","C":"323","D":"325"},"answer":"A"},{"num":30,"type":"判断","question":"对应空预器主、副电机均停延时30s且一次风机出口联络挡板全关时，一 次风机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":31,"type":"判断","question":"干排渣系统发生故障关断门无法关闭,如果10分钟关断门无法关闭且系统无法 恢复正常，值长应汇报公司领导，申请停炉，防止造成设备严重损坏。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":32,"type":"单选","question":"#5炉启动循环泵出口流量高限（）t/h。","options":{"A":"≯760","B":"≯273","C":"≯616","D":"≯131"},"answer":"A"},{"num":33,"type":"单选","question":"#5、#6锅炉磨煤机出口温度高限（）℃。","options":{"A":"87","B":"77","C":"97","D":"107"},"answer":"A"},{"num":34,"type":"单选","question":"高温区长吹温度设定值（）℃、压力设定值（）mPa。","options":{"A":"290,3.8","B":"365,3.2","C":"2902.5","D":"365,2.5"},"answer":"A"},{"num":35,"type":"判断","question":"当炉膛出口烟气温度＜45℃后，可以停用等离子火检冷却风机。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":36,"type":"判断","question":"主再蒸汽进入主机的两侧温差应控制在17℃之内，17至28℃内一次不得超 过15min。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":37,"type":"判断","question":"机组停运检修，为缩短检修时间，需加快汽机转子、缸体等金属部件的 冷却，可采用滑参数停机。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":38,"type":"单选","question":"引风机轴承振动值达#5炉（）mm/s、#6炉（）mm/s时发出报警。","options":{"A":"4.6,6.3","B":"4.6,4.6","C":"6.3,6.3","D":"10.1,6.3"},"answer":"A"},{"num":39,"type":"单选","question":"炉前燃油系统的投运时，应检查滤网前后压差应（）Mpa，否则切换一组 滤网，联系检修人员清洗滤网。","options":{"A":"小于0.3","B":"小于0.4","C":"小于0.1","D":"小于0.2"},"answer":"A"},{"num":40,"type":"单选","question":"油枪点火启动中，当汽水分离器压力达到（）、第一台磨煤机给煤量达 （）时，启动第二台（D或A在等离子模式下）磨煤机。","options":{"A":"5.0MP","B":"5.0MP","C":"4.0MP","D":"4.0MP"},"answer":"A"},{"num":41,"type":"判断","question":"空压机的运行维护检查空压机进气真空不大于0.05bar。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":42,"type":"单选","question":"当锅炉负荷大于（）％B-MCR且燃烧稳定时，才考虑对烟道进行吹灰。","options":{"A":"50","B":"30","C":"40","D":"60,5"},"answer":"A"},{"num":43,"type":"判断","question":"主、再热汽两侧温度偏差小于17℃（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":44,"type":"判断","question":"一次风机电机轴承温度高（>80℃），延时5s时，一次风机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":45,"type":"单选","question":"#5、#6锅炉点火油压力低限为（）MPa。","options":{"A":"2.0","B":"1.5","C":"1.0","D":"2.5"},"answer":"A"},{"num":46,"type":"单选","question":"若锅炉疏水泵选为“主泵”方式，冷凝水箱水位（）时联锁启动。","options":{"A":"≥1300mm","B":"≥1000mm","C":"≥300mm","D":"≥2300mm"},"answer":"A"},{"num":47,"type":"判断","question":"上水速度应缓慢，上水温度与贮水罐和汽水分离器以及有关厚壁集箱管道的 壁温差≤28℃，升压期间应保持贮水罐和汽水分离器的壁温≥20℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":48,"type":"判断","question":"当机组负荷降至500MW时，要求机组稳定运行120min，同时将主蒸汽压 力逐渐降至13.0MPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":49,"type":"判断","question":"锅炉冷态启动点火初期不应过早投入煤粉，一定要将热一次风温加热到1 60℃以后才能启动磨煤机运行。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":50,"type":"单选","question":"停炉多久（）锅炉属于温态。","options":{"A":"72小时（汽水分离器金属温度≤120℃）","B":"10～72小时内（汽水分离器金属温度120～260℃）","C":"停炉时间在1～10小时内（汽水分离器金属温度260～340℃）","D":"1小时内（汽水分离器金属温度≥340℃）"},"answer":"B"},{"num":51,"type":"判断","question":"空压机的运行维护检查油气分离器出口的空气温度T2不超过106℃，否则 应联系检修处理。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":52,"type":"判断","question":"锅炉运行中加强对烟道各处烟温的监视，发现烟温不正常上升20℃时应 及时处理。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":53,"type":"单选","question":"锅炉启动循环泵注水进行化学清洗前，先用低压注水注满马达腔，然后把注水流量控 制在约3.8l/min维持连续注水，此时注水压力超过泵进口压力约MPa。（）","options":{"A":"0.7","B":"0.5","C":"0.3","D":"0.9"},"answer":"A"},{"num":54,"type":"判断","question":"在排渣系统停运过程中，集控运行人员和除灰人员必须每60分钟打开冷 灰斗看焦孔进行检查一次，发现异常及时处理。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":55,"type":"判断","question":"在正常运行时，应将两台一次风机动叶投自动，两台一次风机负荷应均匀 ，电流相差一般不超过10A，防止负荷低的一次风机发生失速。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":56,"type":"单选","question":"投运炉前燃油及吹扫空气系统，锅炉进油跳闸阀前燃油压力应（），油 枪吹扫杂用压缩空气压力为（）。","options":{"A":"","B":"","C":"","D":"大于3.0MP"},"answer":"D"},{"num":57,"type":"单选","question":"#6炉启动循环泵电机冷却器的闭式水流量正常范围（）t/h。","options":{"A":"＞10.6","B":"＞8.6","C":"＞16","D":"＞12"},"answer":"C"},{"num":58,"type":"判断","question":"冬季锅炉上水时间一般不少于4小时，其它季节不少于2～3小时。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":59,"type":"单选","question":"#5炉引风机及电机润滑油压小于（）MPa时风机跳闸","options":{"A":"0.05","B":"0.12","C":"0.15","D":"0.10"},"answer":"A"},{"num":60,"type":"判断","question":"高温区长吹温度设定值290℃、压力设定值3.8mPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":61,"type":"判断","question":"磨煤机磨辊轴承油温＞70℃，延时3s时，磨煤机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":62,"type":"判断","question":"#5、#6锅炉点火油压力正常值为3.0MPa。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":63,"type":"单选","question":"#5炉引风机轴承温度（）℃时报警。","options":{"A":"≥90","B":"≥85","C":"≥80","D":"≥75"},"answer":"A"},{"num":64,"type":"单选","question":"锅炉启动过程中，当疏水含铁量（）μg/L、SiO2（）μg/L时可回收到凝汽 器。","options":{"A":"<500，<200","B":"<500，<300","C":"<400，<200","D":"<400，<300"},"answer":"A"},{"num":65,"type":"判断","question":"严格控制炉膛出口烟温，在再热器无蒸汽流通时，炉膛出口烟温必须小 于540℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":66,"type":"单选","question":"给煤机电机功率为（）kw。","options":{"A":"4.0","B":"5","C":"3","D":"6"},"answer":"A"},{"num":67,"type":"单选","question":"#5、#6锅炉SCR装置出口烟气NH3 含量正常范围（）ppm。","options":{"A":"<3","B":"<5","C":"<6","D":"<2"},"answer":"A"},{"num":68,"type":"单选","question":"#5锅炉一次热风母管压力高限（）kPa。","options":{"A":"12","B":"11","C":"13","D":"14"},"answer":"A"},{"num":69,"type":"判断","question":"机组启停及正常运行中应严格控制升温和降温速率不大于2℃/min，防止 温度大幅、快速反复波动（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":70,"type":"判断","question":"火检冷却风机的运行时，维持冷却风母管压力≥7.0Kpa，当低于6kPa时报 警。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":71,"type":"单选","question":"制粉系统运行时，推力瓦油温高报警值（）℃。","options":{"A":"≥60","B":"≥70","C":"≥50","D":"≥55"},"answer":"A"},{"num":72,"type":"单选","question":"#5、#6锅炉空预器出口烟温正常范围（）℃。","options":{"A":"125","B":"120","C":"115","D":"135"},"answer":"A"},{"num":73,"type":"判断","question":"停炉前在机组负荷大于50％BMCR时，应对各受热面进行一次全面吹灰。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":74,"type":"单选","question":"加强对锅炉启动循环泵运行情况的监视，监视其电流（）、马达腔温度 （）。","options":{"A":"＜59.3","B":"＜58.3","C":"＜58.3","D":"＜59.3"},"answer":"B"},{"num":75,"type":"判断","question":"选为“主泵”的疏水泵运行信号失去且冷凝水箱水位≥300mm时，选为“辅泵 ”的疏水泵会联锁启动。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":76,"type":"判断","question":"若仪用气压力下降至0.35MPa，#1- 3空压机无法维持时，应启动#4空压机运行，确认#4空压机向杂用气系统 供气门关闭，开启向仪用气供气门。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":77,"type":"判断","question":"磨辊在下降位，给煤机给煤量低于最小值26T/H延时60s时，磨煤机跳闸 。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":78,"type":"单选","question":"送风机轴承温度不高（），送风机许可启动。","options":{"A":"<80℃","B":"<60℃","C":"<70℃","D":"<90℃"},"answer":"A"},{"num":79,"type":"单选","question":"从350MW滑至150MW左右时，控制主蒸汽压力缓慢降至（）MPa左右。","options":{"A":"8.5","B":"9.0","C":"7.5","D":"7.0"},"answer":"A"},{"num":80,"type":"判断","question":"磨煤机一次风流量低低（<65％,97T/H）、延时20s，一次风流量低低低（ <50％,74T/H）、延时5s时，磨煤机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":81,"type":"判断","question":"#5炉引风机电机轴承温度应＜70℃，≥75℃时报警，当温度达到85℃，延 时5s风机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":82,"type":"判断","question":"磨煤机润滑油压<0.1MPa，延时6s时，磨煤机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":83,"type":"判断","question":"#5、#6锅炉仪用压缩空气母管压力正常范围0.6~0.8MPa。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":84,"type":"判断","question":"注意控制氨气/空气混合气中氨气体积比不大于5%。（）A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":85,"type":"单选","question":"#5、#6锅炉贮水罐水位（）m时，跳BCP泵","options":{"A":"0.5","B":"1.5","C":"1.0","D":"2.0"},"answer":"A"},{"num":86,"type":"判断","question":"锅炉启动前确保空气预热器进出口烟／风挡板，应能远方开关操作，且 关闭严密。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":87,"type":"单选","question":"一次风机及电机润滑油滤网差压（）MPa。","options":{"A":"< 0.4","B":"< 0.5","C":"< 0.3","D":"< 0.2"},"answer":"B"},{"num":88,"type":"单选","question":"水压试验用水应采用加氨和朕氨处理的除盐水，水中氯离子含量应小于 （）。","options":{"A":"15mg/L","B":"20mg/L","C":"25mg/L","D":"30mg/L"},"answer":"C"},{"num":89,"type":"单选","question":"制粉系统运行时，润滑油分配器油压正常范围（）MPa。","options":{"A":"≥0.13","B":"≥0.14","C":"≥0.15","D":"≥0.12"},"answer":"A"},{"num":90,"type":"单选","question":"制粉系统运行时，密封风与一次风差压正常范围（）kPa。","options":{"A":"≥2.5","B":"≥2.0","C":"≥3.0","D":"≥3.5"},"answer":"B"},{"num":91,"type":"单选","question":"当蒸汽压力（）时应确认锅炉所有疏水、放汽门联锁关闭，防止出现阀 门漏关的现象。","options":{"A":"≥0.881MP","B":"≥0.681MP","C":"≥0.981MP","D":"≥0.781MP"},"answer":"C"},{"num":92,"type":"判断","question":"机组临时停运达30天还未接到开机通知，机组重新点火，按照氨水碱化 烘干法重新进行一次保养。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":93,"type":"判断","question":"一次风机失速延时60s时，一次风机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":94,"type":"单选","question":"#6锅炉垂直水冷壁出口壁温高限为（）℃。","options":{"A":"495","B":"505","C":"515","D":"525"},"answer":"B"},{"num":95,"type":"判断","question":"干燥机正常运行时，吸附塔出口露点控制在≤－40℃。（）A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":96,"type":"单选","question":"#5炉送风机电机功率为（）kw。","options":{"A":"2000","B":"2300","C":"2500","D":"2200"},"answer":"A"},{"num":97,"type":"判断","question":"炉前燃油系统母管压力正常时应通过回油管上的调节门控制，维持进油 压力为3.0-3.2MPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":98,"type":"判断","question":"锅炉投运1年后要结合检查性大修进行安全性能检查。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":99,"type":"单选","question":"#6锅炉省煤器进口给水流量高限（B-MCR工况）（）t/h。","options":{"A":"2991.3","B":"2935.59","C":"2955.59","D":"2965.3"},"answer":"B"},{"num":100,"type":"单选","question":"启动第一组引、送风机，调整炉膛压力在（），投入炉膛负压控制自动 。","options":{"A":"-0.1kP","B":"","C":"","D":""},"answer":"A"},{"num":101,"type":"单选","question":"当炉膛出口烟温达（）℃时，确认烟温探针应自动退出，否则应手动退出 。","options":{"A":"590","B":"580","C":"570","D":"560"},"answer":"B"},{"num":102,"type":"单选","question":"#5锅炉省煤器进口给水流量低限（）t/h","options":{"A":"580","B":"550","C":"510","D":"570"},"answer":"A"},{"num":103,"type":"单选","question":"送风机电机、风机润滑油压力正常（），送风机许可启动。","options":{"A":">0.1MP","B":">0.3MP","C":">0.2MP","D":">0.4MP"},"answer":"C"},{"num":104,"type":"单选","question":"运行中油气分离器进出口的空气压差△P1不超过（）bar。","options":{"A":"1.3","B":"1.4","C":"1.5","D":"1.6"},"answer":"B"},{"num":105,"type":"单选","question":"若仪用气压力下降至（）MPa，#1- 3空压机无法维持时，应启动#4空压机运行，确认#4空压机向杂用气系统 供气门关闭，开启向仪用气供气门。","options":{"A":"0.7","B":"0.6","C":"0.5","D":"0.55"},"answer":"B"},{"num":106,"type":"单选","question":"#5、#6锅炉炉膛压力为（）kPa时锅炉MFT。","options":{"A":"±4","B":"±2","C":"±3","D":"±1"},"answer":"C"},{"num":107,"type":"判断","question":"随着锅炉负荷增加，蒸发量增大，启动分离器贮水罐水位逐渐下降，当 锅炉启动循环泵出口流量小于 131 t/h时，锅炉启动循环泵最小流量再循环门自动开启。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":108,"type":"单选","question":"#5炉喘振报警值：A送风机（）Pa；B送风机（）Pa。","options":{"A":"2360，2280","B":"2360，2200","C":"2460，2280","D":"2460，2200"},"answer":"A"},{"num":109,"type":"判断","question":"锅炉进行化学清洗主要是用化学方法清除在制造、运输、贮存和安装过程中产生和遗 留在锅炉水系统中的残渣、氧化皮、铁锈和其他杂质，避免运行中受热面内表面结垢 ，提高水汽品质。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":110,"type":"判断","question":"#6炉省煤器实际工作压力33.4MPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":111,"type":"判断","question":"机组临时停运且停运时间明确小于1周，采用热炉防水、余热烘干法（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":112,"type":"单选","question":"#5、#6锅炉压缩空气温度高限（）℃。","options":{"A":"65","B":"55","C":"75","D":"85"},"answer":"A"},{"num":113,"type":"判断","question":"上水温度高于周围露点温度以防止锅炉表面结露，但也不宜温度过高以 防止引起汽化和过大的温度应力，一般取20-70℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":114,"type":"判断","question":"一次风机电机、风机润滑油压力低（<0.1MPa）且风机润滑油流量低（<6l /min）延5s时，一次风机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":115,"type":"单选","question":"等离子点火装置燃烧器内壁温度正常范围（）℃。","options":{"A":"＜400","B":"＜300","C":"＜250","D":"＜200"},"answer":"A"},{"num":116,"type":"判断","question":"炉膛烟温探针伸进许可条件为锅炉指令<20%。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":117,"type":"单选","question":"#5锅炉高温再热器出口壁温高限为（）℃。","options":{"A":"628","B":"630","C":"620","D":"623"},"answer":"A"},{"num":118,"type":"判断","question":"#6炉启动分离器设计压力为33.08MPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":119,"type":"判断","question":"#6锅炉主蒸汽压力保护跳闸值30.6Mpa.g。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":120,"type":"判断","question":"冷态启动时，最初负荷变化率为5 MW/min，300 MW以上时可以加大到10MW/min。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":121,"type":"单选","question":"运行中空压机加载时的最大电流不超过（）A。","options":{"A":"45","B":"50","C":"55","D":"60"},"answer":"A"},{"num":122,"type":"判断","question":"机组正常运行或启停机及变工况过程中，主汽温度10min内连续下降50℃ 应紧急停机，并及时开启有关疏水阀。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":123,"type":"判断","question":"吹扫压缩空气压力为0.6～0.8MPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":124,"type":"单选","question":"送风机润滑油流量正常（），送风机许可启动。","options":{"A":">4 l/min","B":">6 l/min","C":">8 l/min","D":">10 l/min"},"answer":"B"},{"num":125,"type":"判断","question":"水压试验用水应采用加氨和朕氨处理的除盐水，其PH值为10- 10.5，水中氯离子含量应小于25mg/L。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":126,"type":"判断","question":"运行中过热器出口两侧汽温偏差不超过5℃，再热器出口两侧汽温偏差不超过10 ℃，屏过出口两侧汽温不超过20℃，各处烟温偏差不超过50℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":127,"type":"判断","question":"启动磨煤机前，空预器出口一次风温度尽量达到160℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":128,"type":"判断","question":"主蒸汽温度608～616℃一年累计不得超过400小时，每次运行时间不得超 过30min，否则故障停机。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":129,"type":"单选","question":"#5炉引风机轴承温度（）℃时，延时5s风机跳闸。","options":{"A":"80","B":"110","C":"90","D":"70"},"answer":"B"},{"num":130,"type":"判断","question":"锅炉一次系统水压试验上水过程中，流量维持200t/h（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":131,"type":"单选","question":"当送风机轴承温度达到（）℃，延时5s风机跳闸。","options":{"A":"110","B":"80","C":"90","D":"70"},"answer":"C"},{"num":132,"type":"单选","question":"#6锅炉水平烟道侧包墙过热器出口壁温高限为（）℃。","options":{"A":"485","B":"500","C":"495","D":"595"},"answer":"C"},{"num":133,"type":"单选","question":"压缩空气系统投运正常时，仪用气压力为（）。","options":{"A":"","B":"0.6~0.8MP","C":"","D":""},"answer":"B"},{"num":134,"type":"单选","question":"#6锅炉顶棚过热器出口壁温高限为（）℃。","options":{"A":"474","B":"484","C":"494","D":"464"},"answer":"A"},{"num":135,"type":"判断","question":"正常模式下给煤机运行未满120s（等离子模式下为180s）点火能量丧失时 ，磨煤机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":136,"type":"单选","question":"一次风机及电机润滑油箱油温为（）℃","options":{"A":"30～40","B":"30～50","C":"20～50","D":"20～40"},"answer":"B"},{"num":137,"type":"单选","question":"升负荷过程中应注意主、再热汽两侧温度偏差（）。","options":{"A":"小于17℃","B":"小于27℃","C":"小于15℃","D":"小于10℃"},"answer":"A"},{"num":138,"type":"单选","question":"磨煤机润滑油压（），延时6s，磨煤机跳闸。","options":{"A":"<0.11MP","B":"<0.1MP","C":"<0.12MP","D":"<0.13MP"},"answer":"B"},{"num":139,"type":"单选","question":"引风机电机电压为（）kv。","options":{"A":"6.3","B":"6.6","C":"6","D":"6.1"},"answer":"C"},{"num":140,"type":"单选","question":"空预器吹灰温度设定值（）℃、压力设定值2.5MPa。","options":{"A":"","B":"365,3.2","C":"290,3.8","D":"365,2.5"},"answer":"D"},{"num":141,"type":"判断","question":"锅炉停炉前应按烟气的流向对烟道进行全面的吹灰。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":142,"type":"单选","question":"引风机及电机润滑油邮箱油温为（）℃。","options":{"A":"30~40","B":"20~40","C":"20~30","D":"25~35"},"answer":"A"},{"num":143,"type":"单选","question":"滑参数停机时，遵守先降压后降温的原则，逐步把蒸汽参数下滑，并控制锅炉主、再 热蒸汽的降压速率小于0.1MPa/min，降温速率小于1.5℃/min。（）","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":144,"type":"判断","question":"机组大修后，应进DCS系统电源的切换试验，备用电源的切换时间应小于 5ms。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":145,"type":"单选","question":"总煤量（）T/H以上可以启动第5台磨煤机","options":{"A":"240","B":"300","C":"320","D":"230"},"answer":"B"},{"num":146,"type":"单选","question":"当油泵在备用位时，相应的空预器导向轴承油温小于（），空预器导向 轴承油泵自动停止。","options":{"A":"45℃","B":"50℃","C":"55℃","D":"60℃"},"answer":"B"},{"num":147,"type":"判断","question":"运行中应加强各受热面蒸汽温度及热偏差监视调整，高过出口蒸汽温度不超过 590℃，屏过出口温度不超过610℃，高再出口温度不超过608℃（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":148,"type":"单选","question":"吹灰系统运行时，短吹压力为（）MPa。","options":{"A":"3.2","B":"2.5","C":"3.8","D":"3.0"},"answer":"B"},{"num":149,"type":"判断","question":"热态启动过程中，当分离器压力＞12MPa时，若开启361阀会对疏水系统 造成冲击，注意控制给水流量和贮水罐水位的变化（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":150,"type":"单选","question":"送风机及电机润滑油压稳定正常，压力在（）MPa左右。","options":{"A":"0.25","B":"0.3","C":"0.35","D":"0.40"},"answer":"B"},{"num":151,"type":"单选","question":"启动第二组引、送风机，调整两组风机出力平衡，维持总风量在（）。","options":{"A":"","B":"30～40%（996－1328T/H）","C":"","D":""},"answer":"B"},{"num":152,"type":"判断","question":"吹灰系统母管压力设定：短吹2.5MPa，高温区长吹3.2MPa，其他区域长 吹、半长吹3.8MPa（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":153,"type":"单选","question":"送风机轴承温度（）℃时报警。","options":{"A":"≥80","B":"＜80","C":"＜70","D":"≥70"},"answer":"A"},{"num":154,"type":"单选","question":"当吹灰母管压力低于（）MPa，短吹吹灰器保护退出。","options":{"A":"2.5","B":"3.5","C":"3.0","D":"3.2"},"answer":"A"},{"num":155,"type":"单选","question":"正常情况下或做动平衡试验时，200kW～500kW的电动机每次启动的间隔 时间（）。","options":{"A":"不小于0.5小时","B":"不小于1小时","C":"不小于2小时","D":"不小于1.5小时"},"answer":"B"},{"num":156,"type":"判断","question":"干排渣机、碎渣机检修工作票批准时间不得超过4小时。（） A、 正确B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":157,"type":"判断","question":"暖风器运行中控制空预器冷端综合温度不低于150℃、疏水箱水位400- 600mm之间。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":158,"type":"判断","question":"当#5炉炉膛出口烟温达540℃时来“炉膛出口烟气温度高”报警信号。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":159,"type":"判断","question":"机组临时停运且停运时间不确定，采用氨水碱化烘干法。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":160,"type":"判断","question":"制粉系统运行时，磨煤机运行时电流正常范围60~80A。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":161,"type":"单选","question":"#6锅炉一次热风母管压力高限（）kPa。","options":{"A":"12","B":"11","C":"13","D":"14"},"answer":"A"},{"num":162,"type":"判断","question":"若确认烟道已发生再燃烧时，排烟温度达200℃时应紧急手动MFT，按烟 道再燃烧的处理规定进行处理。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":163,"type":"单选","question":"炉本体疏水温度不低于（）℃、空预器吹灰疏水温度不低于（）℃，才允 许投入吹灰器。","options":{"A":"330,330","B":"230,230","C":"230，330","D":"330,230"},"answer":"C"},{"num":164,"type":"判断","question":"空压机的运行维护检查空压机出口的排气温度T1不超过106℃，否则应联 系检修处理。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":165,"type":"判断","question":"锅炉停炉2周以上时必须对空气预热器受热面进行检查，若有存挂油垢或 积灰堵塞的现象，应及时清理并进行通风干燥。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":166,"type":"判断","question":"减负荷时总煤量320T/H以下最多只允许4台磨煤机运行；总煤量240T/H以 下只允许3台磨煤机运行。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":167,"type":"判断","question":"密封风母管压正常范围是14~20kPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":168,"type":"判断","question":"#6锅炉主蒸汽压力正常范围≤29.3Mpa.g。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":169,"type":"单选","question":"等离子点火装置冷却水温度正常范围（）℃。","options":{"A":"30~40","B":"30~50","C":"20~40","D":"20~30"},"answer":"A"},{"num":170,"type":"单选","question":"干排渣系统运行时，清扫链张紧压力一般为（）MPa左右。","options":{"A":"0.5","B":"0.6","C":"0.25","D":"0.35"},"answer":"C"},{"num":171,"type":"单选","question":"制粉系统运行时，磨煤机出口温度正常范围（）℃。","options":{"A":"65~80","B":"55~80","C":"65~97","D":"55~97"},"answer":"A"},{"num":172,"type":"判断","question":"一次风机轴承温度高（>90℃），延时5s时，一次风机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":173,"type":"单选","question":"磨煤机加载油压力低（），延时120S，磨煤机跳闸。","options":{"A":"<3.0MP","B":"<1.0MP","C":"<2.0MP","D":"<2.5MP"},"answer":"C"},{"num":174,"type":"单选","question":"投入火检冷却风系统运行，确认系统各阀门状态正确、冷却风母管压力 大于（）。","options":{"A":"","B":"","C":"","D":"7.0kP"},"answer":"D"},{"num":175,"type":"判断","question":"对锅炉启动循环泵运行情况的监视，监视其电流#5炉＜58.3A（#6炉＜59. 32A）、马达腔温度＜60℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":176,"type":"单选","question":"#5锅炉屏式过热器出口壁温高限为（）℃。","options":{"A":"611","B":"600","C":"608","D":"608"},"answer":"A"},{"num":177,"type":"判断","question":"当#5炉炉膛出口烟温达580℃时，确认烟温探针应自动退出，否则应手动 退出。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":178,"type":"判断","question":"工业水系统电机功率为110kw。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":179,"type":"单选","question":"引风机动叶无论在手动或自动方式，均应使并列运行的风机电流、动叶开度、负荷 基本接近，保持风机能安全地并列运行，两台风机电流偏差不超过20A。（）","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":180,"type":"判断","question":"空压机的运行维护检查空压机进口气量调节系统工作正常，空压机出口排气压力P2应 在设定值0.75～0.85MPa左右自动调节，调节器调节灵活，蝶阀工作正确。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":181,"type":"判断","question":"在机组热（温）态启动过程中要严格遵守热态启动曲线，加快锅炉的升温升压速率； 选择较高的汽机冲转参数（包括轴封汽），尽快冲转并网带较高的初负荷，以此缩短 启动时间。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":182,"type":"单选","question":"油枪点火启动中，当过热汽压力达（）时，手动开启过热器电磁泄压阀6 0s，进行排汽试验。","options":{"A":"1.5MP","B":"2.5MP","C":"3.5MP","D":"3.0MP"},"answer":"B"},{"num":183,"type":"单选","question":"#6炉引风机液压油压小于（）Mpa时报警，同时闭锁动叶操作、联启备用 泵","options":{"A":"0.8","B":"3.5","C":"2.5","D":"3.0"},"answer":"A"},{"num":184,"type":"单选","question":"转动设备轴承振动在转动设备规程没有明确规定的情况下，转速1500r/mi n时振动允许双幅值（）mm。","options":{"A":"0.085","B":"0.05","C":"0.10","D":"0.12"},"answer":"A"},{"num":185,"type":"判断","question":"启动循环泵出入口差压正常值为＞0.33MPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":186,"type":"单选","question":"制粉系统运行时，磨煤机电机轴承温度保护值（）℃。","options":{"A":"≥90","B":"≥95","C":"≥85","D":"≥80"},"answer":"A"},{"num":187,"type":"单选","question":"压缩空气系统投运正常时，杂用气压力为（）。","options":{"A":"","B":"","C":"","D":"0.55~0.8MP"},"answer":"D"},{"num":188,"type":"单选","question":"制粉系统运行时，齿轮箱油池油温高报警（）℃。","options":{"A":"≥45","B":"≥40","C":"≥50","D":"≥55"},"answer":"A"},{"num":189,"type":"单选","question":"#5、#6锅炉贮水罐水位低限（）m","options":{"A":"2.0","B":"2.5","C":"1.5","D":"3.0"},"answer":"C"},{"num":190,"type":"单选","question":"运行中空压机进口气量调节系统工作正常，空压机出口排气压力P2应在 设定值（）MPa左右自动调节。","options":{"A":"0.75～0.85","B":"0.55～0.85","C":"0.75～0.80","D":"0.65～0.80"},"answer":"A"},{"num":191,"type":"单选","question":"#5、#6锅炉总风量正常范围为（）%。","options":{"A":"≥35","B":"≥40","C":"≥20","D":"≥30"},"answer":"D"},{"num":192,"type":"单选","question":"#6炉二次风暖风器运行时，水位到高二值（）mm时，联锁启动第二台泵 。","options":{"A":"800","B":"400","C":"700","D":"600"},"answer":"A"},{"num":193,"type":"判断","question":"当SCR进、出口烟气温度均在310℃～420℃范围时，开启喷氨流量调节阀 前、后快关阀。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":194,"type":"单选","question":"#5锅炉再热汽温度低限（）℃。","options":{"A":"585","B":"580","C":"590","D":"595"},"answer":"A"},{"num":195,"type":"判断","question":"定期检查统计DCS系统中和CPU的负荷率应小于40%，如超过设计指标， 应迅速采取措施处理。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":196,"type":"判断","question":"引风机运行中动叶开度不宜大于90%，达到90%时闭锁增，电机电流禁止 超过979A。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":197,"type":"判断","question":"空压机的运行维护检查油气分离器进出口的空气压差△P1不超过1.4bar。 （） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":198,"type":"单选","question":"#5密封风机电机电流正常值（）A。","options":{"A":"＜340","B":"＜350","C":"＜360","D":"＜370"},"answer":"C"},{"num":200,"type":"单选","question":"#5、#6锅炉贮水罐水位（）m为上水水位","options":{"A":"10","B":"12","C":"11","D":"13"},"answer":"B"},{"num":201,"type":"单选","question":"一次风机电机轴承温度应（）℃。","options":{"A":"＜70","B":"＜100","C":"＜110","D":"＜90"},"answer":"A"},{"num":202,"type":"判断","question":"引风机正常运行时，应将动叶投自动，若在手动时，应保持炉膛负压在- 0.1～-0.15KPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":203,"type":"判断","question":"送风机液压油压力在3.0Mpa左右，小于0.8Mpa时报警且闭锁动叶操作， 联启备用油泵。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":204,"type":"单选","question":"冷、热一次风母管压力应维持（）kPa。","options":{"A":"10～12","B":"10～14","C":"8～12","D":"8～14"},"answer":"A"},{"num":205,"type":"单选","question":"等离子点火装置冷却水压力正常范围（）MPa。","options":{"A":"0.6~1.0","B":"0.6~0.8","C":"0.3~0.5","D":"0.3~1.0"},"answer":"A"},{"num":206,"type":"单选","question":"等离子点火装置一次风风速高报警值（）m/s。","options":{"A":"≥28","B":"≥26","C":"≥24","D":"≥30"},"answer":"A"},{"num":207,"type":"判断","question":"#5炉省煤器实际工作压力31.76MPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":208,"type":"判断","question":"机组负荷300MW至200MW之间，机组采用定压运行方式，控制负荷变化 率10MW /min，缓慢减少锅炉燃烧率，逐渐减少汽机负荷指令，汽机高压调门关 小，维持主蒸汽压力稳定。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":209,"type":"判断","question":"火检冷却风机出口压力为10.7kPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":210,"type":"判断","question":"#5炉引风机轴承温度应＜70℃，≥90℃时报警，当温度达到110℃，延时5s 风机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":211,"type":"单选","question":"制粉系统运行时，磨煤机线圈温度高报警值（）℃。","options":{"A":"≥130","B":"≥125","C":"≥120","D":"≥115"},"answer":"A"},{"num":212,"type":"判断","question":"锅炉进水后对锅炉各疏水门排放15min关闭（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":213,"type":"单选","question":"正常情况下或做动平衡试验时，200kW以下的电动机每次启动的间隔时间 （）。","options":{"A":"不小于0.5小时","B":"不小于1小时","C":"不小于1.5小时","D":"不小于2小时"},"answer":"A"},{"num":214,"type":"单选","question":"当油泵为主时，相应的空预器导向轴承油温小于（），空预器导向轴承 油泵自动停止。","options":{"A":"45℃","B":"50℃","C":"55℃","D":"55℃"},"answer":"A"},{"num":215,"type":"多选","question":"油枪投运前的检查有（）。","options":{"A":"检查吹扫压缩空气系统正常，母管压力≥0.6MP","B":"检查炉前燃油系统运行正常，无泄漏，调整母管压力3.0MP","C":"检查确认各油枪进油电磁阀、吹扫电磁阀关闭，各油枪进油手动门、吹扫压缩空气 进气手动门关闭","D":"确认火检冷却风投运，火焰检测系统正常，等离子冷却风系统投运正常。 E、 E.开启油枪进油手动门及吹扫压缩空气进气手动门"},"answer":"A|B|C|D|"},{"num":216,"type":"单选","question":"入口水温与泵壳温差不大（），锅炉允许启动循环泵。","options":{"A":"<56℃","B":"<58℃","C":"<55℃","D":"<50℃"},"answer":"A"},{"num":217,"type":"判断","question":"在锅炉负荷小于30%BMCR时，应维持空预器和SCR装置吹灰连续运行，高负荷阶段按规定定期 对烟道和空预器及SCR装置进行吹灰。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":218,"type":"判断","question":"辅汽供汽时，汽源压力设定0.21～0.56MPa，温度设定295～310℃。#5抽 供汽时不需要设定压力和温度。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":219,"type":"单选","question":"#5锅炉螺旋水冷壁出口壁温高限为（）℃，达到高限将报警。","options":{"A":"475","B":"485","C":"465","D":"495"},"answer":"A"},{"num":220,"type":"单选","question":"低温省煤器运行时，气侧阻力（）MPa。","options":{"A":"≤400","B":"≤350","C":"≤300","D":"≤250"},"answer":"A"},{"num":221,"type":"单选","question":"#5锅炉顶棚过热器出口壁温高限为（）℃。","options":{"A":"478","B":"468","C":"488","D":"499"},"answer":"A"},{"num":222,"type":"判断","question":"热态和极热态启动时，最初负荷变化率为10 MW/min，500 MW以上时可以加大到20MW/min。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":223,"type":"判断","question":"水压试验时升压速度应缓慢，压力从零升至工作压力时升压速度应≤0.3MPa/m in，达到工作压力后升压速度应＜0.1MPa/min。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":224,"type":"单选","question":"#6锅炉二次热风温度正常范围（）℃。","options":{"A":"339","B":"329","C":"328","D":"335"},"answer":"A"},{"num":225,"type":"单选","question":"#6锅炉省煤器进口给水流量低限（）t/h","options":{"A":"580","B":"550","C":"530","D":"570"},"answer":"A"},{"num":226,"type":"判断","question":"关闭回油快关阀，若300s内若进油跳闸阀后的压力变化≤0.3Mpa则锅炉进 油跳闸阀泄漏试验通过。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":227,"type":"单选","question":"锅炉熄火后，应继续监视空预器进、出口烟温，发现烟温不正常升高和炉膛压力不 正常波动等现象时，应立即采取措施查找原因，避免发生尾部烟道二次燃烧。（）","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":228,"type":"判断","question":"空压机电机功率为350kw。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":229,"type":"判断","question":"磨煤机电机额定电流为114A。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":230,"type":"单选","question":"空预器运行中主电机电流#5炉正常范围（）A，#6炉正常范围（）A。","options":{"A":"18~30，32~40","B":"23~32，32~40","C":"32~40，18~30","D":"32~40，23~32"},"answer":"A"},{"num":231,"type":"单选","question":"火检冷却风机电机额定电流为（）A。","options":{"A":"40.5","B":"42","C":"43","D":"44"},"answer":"A"},{"num":232,"type":"多选","question":"制粉系统启停及备用期间的注意事项有（）。","options":{"A":"制粉系统启停时应防止振动大，启动时先铺煤2- 3分钟再降辊，停止时给煤机停止后，磨碗差压降至2.0-2.5KP","B":"任何情况下，磨煤机内着火或磨煤机由于出口温度超过107℃而跳闸，在恢复正常 后，应联系检修人员检查内部情况如磨辊、油封、油质等","C":"对停运的磨煤机也应注意磨煤机出口温度变化，如果温度异常上升，应立即进行隔 离，如证实发生着火，按备用磨煤机着火处理方法进行处理","D":"制粉系统停运时，磨辊抬起后继续运行一段时间，待磨煤机走空后停运磨煤机。 E、 E.冬季磨煤机润滑油站冷却水旁路门保持开启，磨煤机停运后及时关闭冷油器冷却水门，启动后油温正常时开启"},"answer":"A|B|C|D|"},{"num":233,"type":"单选","question":"严格控制锅炉燃烧率，控制汽水分离器进口工质升温率（）。","options":{"A":"<2℃/min","B":"<1℃/min","C":"<1.5℃/min","D":"<2.5℃/min"},"answer":"A"},{"num":234,"type":"单选","question":"等离子点火启动中，维持磨煤机的升温率在（）以下进行暖磨","options":{"A":"5℃/min","B":"4℃/min","C":"3℃/min","D":"2℃/min"},"answer":"A"},{"num":235,"type":"单选","question":"制粉系统运行时，磨碗差压正常范围（）kPa。","options":{"A":"3.0~5.5","B":"1.5~5.5","C":"3.0~6.5","D":"1.5~6.5"},"answer":"A"},{"num":236,"type":"单选","question":"燃油吹扫气压力不低（），锅炉许可点油枪。","options":{"A":">0.6MP","B":">0.7MP","C":">0.8MP","D":">0.5MP"},"answer":"A"},{"num":237,"type":"判断","question":"疏水泵额定电流98.46A，电流低于60A时手动开启再循环门，大于85A时 手动关闭再循环门。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":238,"type":"判断","question":"机组准备A/B级检修，检修时间超过30天，采用成膜胺停炉保养法。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":239,"type":"单选","question":"#5、#6锅炉总风量（）%时锅炉MFT。","options":{"A":"≤25","B":"≤15","C":"≤45","D":"≤35"},"answer":"A"},{"num":240,"type":"单选","question":"当送风机及电机润滑油压（）MPa且流量报警时风机跳闸。","options":{"A":"小于0.1","B":"小于0.2","C":"小于0. 5","D":"小于0.8"},"answer":"A"},{"num":241,"type":"判断","question":"锅炉启动前，及时投用干排渣机运行，开启炉底干排渣机冷却风门。（ ） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":242,"type":"判断","question":"工作压力水压试验压力一次汽水系统为过热器出口工作压力。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":243,"type":"单选","question":"等离子冷却风机任一运行且母管压力（），允许等离子点火。","options":{"A":">3.0kP","B":">4.0kP","C":">5.0kP","D":">6.0kP"},"answer":"A"},{"num":244,"type":"单选","question":"#6锅炉高温再热器出口壁温高限为（）℃。","options":{"A":"647","B":"650","C":"645","D":"637"},"answer":"A"},{"num":245,"type":"判断","question":"#5、#6锅炉工业水母管压力正常范围0.3~0.5MPa。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":246,"type":"判断","question":"正常情况下或做动平衡试验时，500kW以上的电动机每次启动的间隔时间 不小于2小时。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":247,"type":"判断","question":"炉本体疏水温度不低于230℃、空预器吹灰疏水温度不低于330℃，才允许 投入吹灰器。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":248,"type":"单选","question":"#5、#6锅炉炉膛压力高限（）kPa","options":{"A":"2.0","B":"1","C":"3","D":"2.5"},"answer":"A"},{"num":249,"type":"判断","question":"#5炉启动分离器设计压力为32.1MPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":250,"type":"单选","question":"燃油泄漏试验中，关闭回油快关阀后，若300s内若进油跳闸阀后的压力 变化（），则锅炉进油跳闸阀泄漏试验通过。","options":{"A":"≤0.2Mp","B":"≤0.3Mp","C":"≤0.4Mp","D":"≤0.5Mp"},"answer":"B"},{"num":251,"type":"单选","question":"摄像探头的温度到（），或火焰监视探头停气，摄像头自动退出。","options":{"A":"300℃","B":"310 ℃","C":"320 ℃","D":"330 ℃"},"answer":"A"},{"num":252,"type":"单选","question":"#6锅炉螺旋水冷壁出口壁温高限为（）℃，达到高限将报警。","options":{"A":"466","B":"456","C":"476","D":"486"},"answer":"A"},{"num":253,"type":"单选","question":"停机多久（）汽机属于热态。","options":{"A":"汽轮机停机8小时内，高压转子平均温度＞400℃","B":"停机一周或一周以上，高压转子平均温度＜150℃","C":"停机2小时以内","D":"停机56小时，高压转子平均温度150～400℃"},"answer":"A"},{"num":254,"type":"单选","question":"#5、#6锅炉磨煤机一次风量保护跳闸值为（）t/h。","options":{"A":"74.7","B":"77.7","C":"97.7","D":"87.7"},"answer":"A"},{"num":255,"type":"单选","question":"炉膛烟温探针伸进许可条件:锅炉指令（）","options":{"A":"<10%","B":"<15%","C":"<20%","D":"<25%"},"answer":"C"},{"num":256,"type":"判断","question":"每一个关断门关闭时间默认60s，某一个门关断失败（关反馈信号为0） ，下一个门继续关闭，直至全部关断门接受关闭指令（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":257,"type":"单选","question":"#5、#6锅炉密封风机出口母管压力（）kPa时，联动备用密封风机","options":{"A":"≤14KP","B":"≤15KP","C":"≤16KP","D":"≤17KP"},"answer":"A"},{"num":258,"type":"判断","question":"第一支油枪点火1Os内不能建立稳定的火焰，则应关闭其关断阀，查明点 火失败的原因并加以消 除，当风量一直维持在吹扫风量，可不必进行再吹扫，但必须至少等待l min以后，才能再次 点火。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":259,"type":"判断","question":"#5炉再热蒸汽温608～616℃一年累计不得超过400小时。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":260,"type":"单选","question":"温态启动时，300 MW以上时可以加大到（）。","options":{"A":"10MW/min","B":"20 MW/min","C":"15 MW/min","D":"5 MW/min"},"answer":"A"},{"num":261,"type":"多选","question":"一级钢带跳闸条件有（）。","options":{"A":"二级钢带运行信号消失","B":"碎渣机运行信号消失","C":"一级钢带失速信号延时5s","D":"一级钢带过载故障。 E、 E.渣仓入口关断门关闭。 F、 F.渣仓料位高高"},"answer":"A|B|C|D|"},{"num":262,"type":"判断","question":"干燥机启动5～10min后，干燥机处理后的空气达到使用要求，确认冷媒低压表指示在0 .35～0.45MPa范围，冷媒高压表指示在1.2～1.6MPa范围。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":263,"type":"单选","question":"#5、#6锅炉风箱与炉膛差压高限（）kPa。","options":{"A":"1.6","B":"1.8","C":"2.0","D":"2.5"},"answer":"A"},{"num":264,"type":"单选","question":"磨煤机分离器出口温度高（），延时5s，磨煤机跳闸。","options":{"A":"＞107℃","B":"＞97℃","C":"＞117℃","D":"＞127℃"},"answer":"A"},{"num":265,"type":"判断","question":"#5、#6锅炉火检冷却风压力正常范围>7kPa。( )（）A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":266,"type":"多选","question":"磨煤机润滑油系统运行有（）","options":{"A":"磨煤机润滑油分配器油压应≥0.13MP","B":"根据油温的变化情况，调节冷却水回水门适当的开度。维持齿轮箱油温在35- 45℃之间","C":"润滑油滤网差压应小于0.12MP","D":"磨煤机已停运10min，且推力瓦油温小于45℃，允许停止润滑油泵高速运行。 E、 E.齿轮箱油温≤30℃且有油泵运行时投入电加热器，齿轮箱油温≥40℃或油泵停运时投 入电加热器"},"answer":"A|B|C|D|"},{"num":267,"type":"判断","question":"当蒸汽压力≥0.981MPa时应确认锅炉所有疏水、放汽门联锁关闭，防止出 现阀门漏关的现象。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":268,"type":"单选","question":"一次风机及电机润滑油压（）MPa报警。","options":{"A":"小于0.2","B":"小于0.25","C":"小于0.15","D":"小于0.1"},"answer":"A"},{"num":269,"type":"单选","question":"送风机电机线圈温度应（）℃。","options":{"A":"＜110","B":"＜115","C":"＜120","D":"＜125"},"answer":"A"},{"num":270,"type":"判断","question":"正常情况下或做动平衡试验时，200kW以下的电动机每次启动的间隔时间 不小于0.5小时。（）A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":271,"type":"判断","question":"当锅炉负荷降到290MW左右时，维持给水量（约850t/h）不变，缓慢减 少燃料量，随着贮水罐水位的上升锅炉转入湿态运行。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":272,"type":"单选","question":"压缩空气系统投运正常时，干燥机后露点温度应≤（）。","options":{"A":"-40℃","B":"","C":"","D":""},"answer":"A"},{"num":273,"type":"判断","question":"等离子燃烧器投入后，为防止可燃烧物沉积在未投燃烧器的区域产生爆 燃，应适当开启其它燃烧器的二次风。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":274,"type":"判断","question":"锅炉启动循环泵马达腔需要注水时，无论采用高压或低压水源，都必须 对注水管路先进行冲洗，确认注水水质合格，水温低于49℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":275,"type":"多选","question":"辅机设备正常运行要求有（）。","options":{"A":"电动机及辅机机械部分运转平稳，声音正常，振动不超限","B":"各轴承润滑良好，温度正常，轴承冷却水畅通无泄漏","C":"转机轴承温度在转机设备规程没有明确规定的情况下，滑动轴承不超过80℃，滚动 轴承不超过95℃","D":"各轴处密封应良好，无泄漏现象。 E、 E.电动机以及线圈温度正常，调节风门、挡板连接机构完好"},"answer":"A|B|C|D|"},{"num":276,"type":"判断","question":"空预器吹灰温度设定值365℃、压力设定值2.5MPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":277,"type":"单选","question":"制粉系统运行时，磨煤机入口一次风量保护值（）t/h。","options":{"A":"≤97.11 ≤74.7","B":"≤97.11 ≤60.6","C":"≤105 ≤74.7","D":"≤105 ≤60.6"},"answer":"A"},{"num":278,"type":"单选","question":"启动循环泵入口水温和泵壳温差高限（）℃。","options":{"A":"≯58","B":"≯56","C":"≯54","D":"≯52"},"answer":"B"},{"num":279,"type":"判断","question":"密封风机入口滤网差压不大于1.5kPa，当入口滤网差压高时，应对入口滤 网时清理。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":280,"type":"判断","question":"送风机运行中动叶开度不宜大于90%，达到95%时闭锁增，电机电流禁止 超过232A。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":281,"type":"单选","question":"空预器运行中支撑轴承和导向轴承油温油温大于（）℃时，应停运空预器 。","options":{"A":"85","B":"70","C":"55","D":"45"},"answer":"A"},{"num":282,"type":"单选","question":"#6锅炉主蒸汽流量高限（B-MCR工况）（）t/h。","options":{"A":"2935.59","B":"2955.59","C":"2995.59","D":"2925.59"},"answer":"A"},{"num":3,"type":"判断","question":"当冷凝水箱水位#5炉＞1300mm、#6炉＞2500mm时，选为“主泵”方式的疏水泵自启动； #5炉≤300mm、#6炉≤700mm时延时30分钟会跳闸、≤150mm时“主泵”、“辅泵”均联停。 （） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":284,"type":"单选","question":"锅炉停炉后一般应采用自然冷却方式。锅炉熄火4小时后，可以开启引风机进、出 口挡板进行自然通风冷却，控制水冷壁降温速度不超过0.25℃/min。（）","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":285,"type":"单选","question":"#6炉启动循环泵电机电流正常范围（）A。","options":{"A":"＜59.32","B":"＜58","C":"＜58","D":"＜56"},"answer":"A"},{"num":286,"type":"判断","question":"#5锅炉主蒸汽压力正常范围≤27.46Mpa.g。( )（） A、 正确B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":287,"type":"判断","question":"吹灰蒸汽进汽母管压力调节阀，锅炉本体吹灰减温水气动调节阀投自动。压力 设定#5炉1.5MPa、#6炉2.0MPa，温度设定365℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":288,"type":"单选","question":"送风机电机轴承温度（）℃时报警。","options":{"A":"＜80","B":"≥70","C":"≥80","D":"＜80"},"answer":"B"},{"num":289,"type":"单选","question":"等离子点火启动中，各等离子点火装置拉弧，检查等离子电流在（）之 间，电压在（）之间。","options":{"A":"180","B":"180","C":"100","D":"280"},"answer":"A"},{"num":290,"type":"单选","question":"#5、#6锅炉火检冷却风压力（）kPa时，MFT。","options":{"A":"≤4kP","B":"≤5kP","C":"≤3kP","D":"≤2kP"},"answer":"A"},{"num":291,"type":"单选","question":"#5炉启动循环泵电机冷却器的闭式水流量正常范围（）t/h。","options":{"A":"＞10.6","B":"＞8.6","C":"＞16","D":"＞12"},"answer":"A"},{"num":292,"type":"单选","question":"干排渣系统运行时，清扫链张紧置气源压力在（）MPa左右","options":{"A":"0.6","B":"0.25","C":"0.35","D":"0.5"},"answer":"A"},{"num":293,"type":"单选","question":"喘振报警值：A一次风机：（）Pa；B一次风机（）Pa。","options":{"A":"2280，1630","B":"2280，1830","C":"2180，1630","D":"2180，1830"},"answer":"D"},{"num":294,"type":"单选","question":"送风机液压油油压正常（），送风机许可启动。","options":{"A":">2.0MP","B":">1.5MP","C":">3.5MP","D":">2.5MP"},"answer":"D"},{"num":295,"type":"多选","question":"吹灰系统投运的注意事项有（）。","options":{"A":"在投长伸缩式吹灰器和半伸缩式吹灰器时，应对吹，不应单吹。对于长伸缩式吹灰 器，吹灰蒸汽温度应小于370℃","B":"吹灰汽源压力、温度应符合规定，不得擅自改动。当吹灰母管压力低于2.5MP","C":"吹灰器运行过程中，当锅炉发生MFT时，吹灰器自动退出运行，吹灰系统自动停止 ，否则应手动退出","D":"为了保持锅炉受热面清洁，降低排烟热损失，防止炉内结焦，受热面管壁金属超温 ，提高传热及锅炉效率，在锅炉运行中应定期对受热面进行吹灰。 E、 E.吹灰器投运完毕后，应到就地对其进行检查，防止其未退出到位造成损坏。检查确 认吹灰汽源确忆切断，防止漏汽"},"answer":"A|B|C|D|"},{"num":296,"type":"单选","question":"当炉膛出口烟温达（）℃时来“炉膛出口烟气温度高”报警信号。","options":{"A":"570","B":"560","C":"550","D":"540"},"answer":"D"},{"num":297,"type":"单选","question":"#5炉二次汽水系统工作压力水压试验（）","options":{"A":"5.98 MP","B":"5.68MP","C":"6.12MP","D":"5.78MP"},"answer":"A"},{"num":298,"type":"判断","question":"锅炉侧疏水、放汽门对应区域压力≥0.981MPa自动关闭。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":299,"type":"单选","question":"空预器运行中主电机电流#5炉低限（）A，#6炉低限（）A。","options":{"A":"25,30","B":"15,30","C":"30,15","D":"30,25"},"answer":"B"},{"num":300,"type":"单选","question":"#6锅炉屏式过热器出口壁温高限为（）℃。","options":{"A":"608","B":"605","C":"603","D":"611"},"answer":"A"},{"num":301,"type":"单选","question":"一次风机液压油压力在（）MPa左右","options":{"A":"2.5","B":"3.5","C":"3.0","D":"4.0"},"answer":"C"},{"num":302,"type":"单选","question":"空压机冷却水温度正常值（）。","options":{"A":"≤46","B":"≤44","C":"≤42","D":"≤40"},"answer":"A"},{"num":303,"type":"单选","question":"锅炉水压时的上温度要符合要求，控制在（ ）℃范围内，防止金属材料发生低温脆变。","options":{"A":"10-30","B":"20-70","C":"30-50","D":"50-70"},"answer":"B"},{"num":304,"type":"单选","question":"13等离子点火启动中，布煤3分钟左右后，磨碗差压（）左右降下磨辊， 确认液动换向阀开启，比例溢流阀变加载方式，加载压力（）左右。","options":{"A":"3.5kP","B":"2.5kP","C":"2.5kP","D":"3.5kP"},"answer":"C"},{"num":305,"type":"单选","question":"总煤量（）T/H以上可以启动第4台磨煤机","options":{"A":"230","B":"320","C":"300","D":"240"},"answer":"A"},{"num":306,"type":"单选","question":"制粉系统运行时，液压站油箱温度高报警（）℃。","options":{"A":"≥50","B":"≥55","C":"≥65","D":"≥60"},"answer":"D"},{"num":307,"type":"单选","question":"油枪点火启动中，当分离器压力达到（）左右时，维持锅炉总燃料量约 （），给水流量（省煤器进口流量减去炉水泵出口流量）约750 t/h，361阀开度接近0，维持锅炉燃烧稳定，进行稳压管道冲洗。","options":{"A":"6.0MP","B":"7.0MP","C":"6.0MP","D":"7.0MP"},"answer":"D"},{"num":308,"type":"单选","question":"#6锅炉主蒸汽压力（）时，电磁泄压阀动作。","options":{"A":"≥30.8MP","B":"≥31.8MP","C":"≥32.8MP","D":"≥33.8MP"},"answer":"A"},{"num":309,"type":"单选","question":"#6锅炉再热汽流量高限（B-MCR工况）（）t/h。","options":{"A":"2500.35","B":"2445.50","C":"2550.50","D":"2404.35"},"answer":"D"},{"num":310,"type":"单选","question":"磨煤机低速润滑油泵联锁停条件：磨煤机齿轮箱油温大于（）。","options":{"A":"26℃","B":"28℃","C":"30℃","D":"32℃"},"answer":"B"},{"num":311,"type":"单选","question":"当#5- 8空压机在备用时，杂用气母管压力低至（），延时2S，空压机自启动。","options":{"A":"0.30Mp","B":"0.40Mp","C":"0.60MP","D":"0.70Mp"},"answer":"B"},{"num":312,"type":"单选","question":"制粉系统运行时，液压站油箱温度低报警（）℃。","options":{"A":"≤10","B":"≤15","C":"≤20","D":"≤25"},"answer":"C"},{"num":313,"type":"单选","question":"热态和极热态启动时，最初负荷变化率为（）。","options":{"A":"15 MW/min","B":"20MW/min","C":"10 MW/min","D":"5 MW/min"},"answer":"C"},{"num":314,"type":"单选","question":"开启压力表一次门，确认炉前油枪吹扫压缩空气压力（）MPa","options":{"A":"0.6-0.7","B":"0.6-0.8","C":"0.5-0.8","D":"0.5-0.7"},"answer":"B"},{"num":315,"type":"单选","question":"#5、#6锅炉贮水罐水位正常范围（）m。","options":{"A":"6.7~8.6","B":"4.7~6.6","C":"5.7~9.6","D":"6.7~9.6"},"answer":"C"},{"num":316,"type":"单选","question":"#5、#6锅炉仪用压缩空气母管压力（）MPa时，备用联启。","options":{"A":"0.5","B":"0.7","C":"0.6","D":"0.8"},"answer":"C"},{"num":317,"type":"单选","question":"#5炉锅炉启动循环泵电机额定功率为（）kw。","options":{"A":"400","B":"440","C":"410","D":"420"},"answer":"B"},{"num":318,"type":"单选","question":"吹灰系统运行时，其他区域吹灰蒸汽温度为（）℃。","options":{"A":"290","B":"300","C":"365","D":"250"},"answer":"C"},{"num":319,"type":"单选","question":"#5、#6锅炉磨煤机出口温度正常范围（）℃。","options":{"A":"57","B":"77","C":"67","D":"87"},"answer":"B"},{"num":320,"type":"判断","question":"正常情况下，允许冷态（电动机本身温度60℃及以下）下启动1次，允许 热态（电动机本身温度60℃以上）下启动2次。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":321,"type":"单选","question":"#5、#6锅炉SCR装置进口烟气温度正常范围（）℃。","options":{"A":"320~450","B":"300~400","C":"310~420","D":"330~420"},"answer":"C"},{"num":322,"type":"判断","question":"确认系统各设备运行正常，仪用气、杂用气系统各参数符合要求，仪用气压力0.55～0.80MPa左右，干燥机后露点温度≤-40℃。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":323,"type":"单选","question":"引风机A油站润滑油压力（），#5炉引风机许可启动。","options":{"A":"＞0.10MP","B":"＞0.15MP","C":"＞0.12MP","D":"＞0.16MP"},"answer":"C"},{"num":324,"type":"多选","question":"锅炉启动循环泵跳闸原因有（）。","options":{"A":"锅炉启动循环泵马达腔温度高达65℃","B":"锅炉启动循环泵运行60s后，最小流量再循环门全关且出口电动门全关或360阀位小 于5%，延时5秒","C":"锅炉指令＞21％，锅炉启动循环泵流量调节阀全关且校正后汽水分离器贮水罐水位 低于5m，延时30s","D":"启动分离器贮水罐水位低至0.5m。 E、 E.锅炉启动循环泵进口电动门全关"},"answer":"A|B|C|D|"},{"num":325,"type":"单选","question":"火检冷却风机电机功率为（）kw。","options":{"A":"21","B":"19","C":"23","D":"22"},"answer":"D"},{"num":326,"type":"单选","question":"#5、#6锅炉SCR装置喷氨压力正常范围（）MPa。","options":{"A":"0.3","B":"0.4","C":"0.2","D":"0.5"},"answer":"C"},{"num":327,"type":"单选","question":"锅炉疏水泵运行时，当冷凝水箱水位#5炉（）mm、#6炉（）mm时，选为“主泵”方式的疏水泵自启动。","options":{"A":"＞2300，＞3000","B":"＞1300，＞2500","C":"＞2300，＞3300","D":"＞1300，＞3300"},"answer":"B"},{"num":328,"type":"单选","question":"#5锅炉一次热风母管压力正常范围（）kPa。","options":{"A":"8","B":"10","C":"6","D":"5"},"answer":"B"},{"num":329,"type":"单选","question":"磨辊在下降位，给煤机给煤量低于最小值（）延时120s，磨煤机跳闸。","options":{"A":"24T/H","B":"26T/H","C":"28T/H","D":"30T/H"},"answer":"B"},{"num":330,"type":"单选","question":"#5、#6锅炉磨煤机一次风量低限（）t/h。","options":{"A":"77","B":"97","C":"87","D":"107"},"answer":"B"},{"num":331,"type":"单选","question":"#6锅炉主蒸汽温度高限（）℃。","options":{"A":"605","B":"610","C":"611","D":"613"},"answer":"B"},{"num":332,"type":"单选","question":"#6锅炉BCP注水冷却器冷却水量低限为（）m3/h。","options":{"A":"12","B":"11","C":"16","D":"13"},"answer":"C"},{"num":333,"type":"单选","question":"密封风机入口滤网差压高报警值（）kPa。","options":{"A":"≥2.0","B":"≥1.5","C":"≥2.5","D":"≥3.0"},"answer":"B"},{"num":334,"type":"单选","question":"等离子发生器电压正常范围（）V。","options":{"A":"300~650","B":"400~650","C":"300~550","D":"400~550"},"answer":"D"},{"num":335,"type":"单选","question":"送风机电机轴承温度不高（），送风机许可启动。","options":{"A":"<60℃","B":"<80℃","C":"<70℃","D":"<90℃"},"answer":"C"},{"num":336,"type":"单选","question":"火检冷却风机出口压力为（）kPa。","options":{"A":"10.0","B":"9.5","C":"10.7","D":"11.0"},"answer":"C"},{"num":337,"type":"单选","question":"冷态启动时，最初负荷变化率为（）。","options":{"A":"20 MW/min","B":"15 MW/min","C":"5 MW/min","D":"10 MW/min"},"answer":"C"},{"num":338,"type":"单选","question":"#5、#6锅炉工业水母管压力正常范围（）MPa。","options":{"A":"0.5-0.6","B":"0.2-0.3","C":"0.7-0.8","D":"0.3-0.5"},"answer":"D"},{"num":339,"type":"单选","question":"送风机及电机润滑油压（）MPa时报警。","options":{"A":"小于0.1","B":"小于0.5","C":"小于0.8","D":"小于0.2"},"answer":"D"},{"num":340,"type":"判断","question":"当冷凝水箱水位#5炉＞2300mm、#6炉＞2500mm时，选为“辅泵”方式的 疏水泵自启动；≤1300mm时会自停。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":341,"type":"多选","question":"炉膛二次吹扫条件有（）。","options":{"A":"锅炉总风量>30%且<40%","B":"所有三次风挡板在燃油位置（大于30%）","C":"炉膛压力正常（±300P","D":"火检冷却风机出口压力正常（大于7KP"},"answer":"A|B|C|D|"},{"num":342,"type":"单选","question":"#5、#6锅炉BCP注水冷却器冷却水量正常范围（）m3/h。","options":{"A":"18","B":"17","C":"21","D":"20"},"answer":"D"},{"num":343,"type":"单选","question":"其他长吹半长吹温度设定值（）℃、压力设定值（）MPa","options":{"A":"290,3.8","B":"365,3.2","C":"365,2.5","D":"290,2.5"},"answer":"B"},{"num":344,"type":"单选","question":"空预器运行中辅电机电流#5炉正常范围（）A，#6炉正常范围（）A。","options":{"A":"18~30，32~40","B":"32~40，18~30","C":"32~40，23~32","D":"23~32，32~40"},"answer":"D"},{"num":345,"type":"单选","question":"一次风机电机线圈温度达到（）℃时，应手动停止风机运行。","options":{"A":"90","B":"110","C":"80","D":"130"},"answer":"D"},{"num":346,"type":"单选","question":"导向轴承和支承轴承油温达（）℃时超温报警。","options":{"A":"60","B":"85","C":"55","D":"70"},"answer":"D"},{"num":347,"type":"单选","question":"制粉系统运行时，推力瓦油温正常范围（）℃。","options":{"A":"≤55","B":"≤60","C":"≤70","D":"≤50"},"answer":"D"},{"num":348,"type":"单选","question":"引风机A电机轴承温度（），#5炉引风机许可启动。","options":{"A":"<75℃","B":"<80℃","C":"<65℃","D":"<70℃"},"answer":"D"},{"num":349,"type":"判断","question":"炉膛出口烟气温度大于580 ℃，报警（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":350,"type":"多选","question":"下列属于锅炉汽水系统及启动旁路系统满足上水条件的是（）。","options":{"A":"检查过、再热器减温水系统符合投运条件，管道疏水门、排气门、减温水隔离门连 续出水后关闭","B":"所有锅炉本体疏水门处于开启状态","C":"部分锅炉本体排气门处于开启状态，充氮门关闭","D":"锅炉疏水扩容器、冷凝水箱和疏水泵及其管路系统均处于备用状态。 E、 E.锅炉启动系统疏水至雨水排水管或至冷却塔前水池的阀门开启，系统投入备用"},"answer":"A|B|D|"},{"num":351,"type":"单选","question":"低温省煤器运行时，六个通道模块出口烟温平均值保证在（）℃。","options":{"A":"95±5","B":"90±5","C":"95±1","D":"90±1"},"answer":"D"},{"num":352,"type":"单选","question":"引风机A油站液压进油压力（），#5炉引风机许可启动。","options":{"A":"＞4.0MP","B":"＞3.5MP","C":"＞2.5MP","D":"＞3.0MP"},"answer":"B"},{"num":353,"type":"单选","question":"#6炉一次汽水系统工作压力水压试验（）","options":{"A":"7.1MP","B":"7.4 MP","C":"7.3MP","D":"7.5MP"},"answer":"B"},{"num":354,"type":"判断","question":"若燃油跳闸阀后压力≥3.0Mpa则充油失败。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":355,"type":"判断","question":"#5锅炉主蒸汽温度正常值610℃。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":356,"type":"单选","question":"一次风机及电机润滑油压（）MPa且流量低报警时风机跳闸。","options":{"A":"小于0.25","B":"小于0.20","C":"小于0.15","D":"小于0.1"},"answer":"D"},{"num":357,"type":"单选","question":"磨煤机液压站加载油泵运行，液压油压力（）时，磨煤机允许启动。","options":{"A":"＞5.0MP","B":"＞2.0MP","C":"＞4.0MP","D":"＞3.0MP"},"answer":"C"},{"num":358,"type":"单选","question":"当空预器导向轴承润滑油系统的油温达（）℃时，备用油泵启动","options":{"A":"50","B":"60","C":"55","D":"45"},"answer":"B"},{"num":359,"type":"单选","question":"MFT且炉膛压力低低（），延时20s，引风机跳闸。","options":{"A":"<-2.0kP","B":"<-3.5kP","C":"<-3.0kP","D":"<-4.0kP"},"answer":"C"},{"num":360,"type":"单选","question":"锅炉升温升压阶段，严格按照启动曲线控制升温升压速率，每次增加给 煤量不超过（）T，控制煤量变化率为（）T/min左右","options":{"A":"3,2","B":"3,1","C":"2,2","D":"2，1"},"answer":"D"},{"num":361,"type":"单选","question":"#5、#6锅炉仪用压缩空气母管压力正常范围（）MPa。","options":{"A":"0.5~0.6","B":"0.6~0.8","C":"0.3~0.5","D":"0.7~0.8"},"answer":"B"},{"num":362,"type":"多选","question":"空压机启动许可条件有（）。","options":{"A":"空压机控制权在相应机组","B":"空压机在远方控制方式","C":"空压机无综合故障信号","D":"空压机冷却水母管压力正常。 E、 E.空压机冷却水进水电动门开启。 F、 F.空压机无电气故障信号"},"answer":"A|B|C|D|"},{"num":363,"type":"单选","question":"#5炉（）mm、#6炉（）mm时延时30分钟会跳闸，（）mm时“主泵”、“ 辅泵”均联停。","options":{"A":"≤700，≤150，≤300","B":"≤300，≤150，≤700","C":"≤150，≤300，≤700","D":"≤300，≤700，≤150"},"answer":"D"},{"num":364,"type":"单选","question":"引风机电机线圈温度应（）℃，达（）℃时报警。","options":{"A":"＜100，110","B":"＜110，120","C":"＜110，110","D":"＜100，120"},"answer":"C"},{"num":365,"type":"单选","question":"火检冷却风机运行时，维持冷却风母管压力（）kPa，当（）kPa时报警。","options":{"A":"＜70，低于6","B":"＜70，低于5","C":"≥7.0，低于5","D":"≥7.0，低于6"},"answer":"D"},{"num":366,"type":"单选","question":"#5、#6锅炉压缩空气温度超过（）℃，手动停运。","options":{"A":"75","B":"85","C":"65","D":"95"},"answer":"B"},{"num":367,"type":"多选","question":"密封风母管压力低原因有（）。","options":{"A":"密封风机故障，出力降低","B":"磨煤机停运后未关密封风门","C":"冷一次风母管压力太低","D":"密封风机入口滤网堵塞严重。 E、 E.密封风管道大量漏风"},"answer":"A|B|C|D|"},{"num":368,"type":"单选","question":"#6锅炉水平烟道底部出口壁温高限为（）℃。","options":{"A":"499","B":"489","C":"479","D":"469"},"answer":"B"},{"num":369,"type":"单选","question":"#6炉启动循环泵出口流量高限（）t/h。","options":{"A":"≯760","B":"≯273","C":"≯616","D":"≯131"},"answer":"C"},{"num":370,"type":"单选","question":"#5锅炉再热汽压力高限（）Mp","options":{"A":"5.55","B":"5.85","C":"5.75","D":"5.68"},"answer":"D"},{"num":371,"type":"单选","question":"送风机轴承振动值达（）mm/s时发出报警，达（）mm/s时，延时5s风机 跳闸。","options":{"A":"4.6,6.3","B":"6.3，10","C":"4.6,10","D":"6.3,10.3"},"answer":"B"},{"num":372,"type":"单选","question":"当磨煤机润滑油压（）MPa时，报警；当磨煤机润滑油压（）MPa时，磨 煤机跳闸。","options":{"A":"≤0.12，≤0.11","B":"≤0.13，≤0.1","C":"≤0.11，≤0.1","D":"≤0.13，≤0.11"},"answer":"C"},{"num":373,"type":"单选","question":"过热器系统安全阀定砣调整所需的压力一般在（）左右，故锅炉安全阀 校验须在机组带负荷条件下进行。","options":{"A":"20MP","B":"22MP","C":"24MP","D":"26MP"},"answer":"C"},{"num":374,"type":"单选","question":"一次风机运行中动叶开度不宜大于（）%","options":{"A":"80","B":"95","C":"85","D":"90"},"answer":"D"},{"num":375,"type":"判断","question":"炉膛出口烟气温度大于540 ℃，自动退出（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":376,"type":"单选","question":"#6锅炉一次热风母管压力低限（）kPa。","options":{"A":"8","B":"7","C":"9","D":"6"},"answer":"C"},{"num":377,"type":"单选","question":"启动循环泵出入口差压正常范围（）MPa。","options":{"A":"＞0.35","B":"＞0.33","C":"＞0.30","D":"＞0.25"},"answer":"B"},{"num":378,"type":"单选","question":"#6炉送风机电机功率为（）kw。","options":{"A":"2000","B":"2400","C":"2200","D":"2100"},"answer":"B"},{"num":379,"type":"判断","question":"#6炉一次风机电机电流为332A。（） A、 正确B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":380,"type":"单选","question":"启动过程中，注意保证省煤器入口给水流量在（）左右，避免低流量保 护动作。","options":{"A":"30％","B":"25％","C":"20％","D":"35％"},"answer":"B"},{"num":381,"type":"单选","question":"#5锅炉包墙过热器出口壁温高限为（）℃。","options":{"A":"480","B":"486","C":"490","D":"482"},"answer":"B"},{"num":382,"type":"单选","question":"#5锅炉一次热风温度正常范围（）℃。","options":{"A":"310","B":"306","C":"316","D":"320"},"answer":"C"},{"num":383,"type":"单选","question":"#5、#6锅炉凝渣管出口壁温高限为（）℃。","options":{"A":"512","B":"492","C":"502","D":"500"},"answer":"C"},{"num":384,"type":"单选","question":"转动设备轴承振动在转动设备规程没有明确规定的情况下，转速750r/min 及以下时振动允许双幅值（）mm。","options":{"A":"0.05","B":"0.085","C":"0.1","D":"0.12"},"answer":"D"},{"num":385,"type":"单选","question":"制粉系统运行时，齿轮箱油池油温低报警（）℃。","options":{"A":"≤24","B":"≤26","C":"≤28","D":"≤30"},"answer":"C"},{"num":386,"type":"单选","question":"送风机电机轴承温度应（）℃。","options":{"A":"≥80","B":"＜80","C":"＜70","D":"≥70"},"answer":"C"},{"num":387,"type":"单选","question":"#6锅炉主蒸汽压力保护跳闸值（）Mp","options":{"A":"33.2","B":"29.2","C":"30.8","D":"32.6"},"answer":"D"},{"num":388,"type":"单选","question":"#6锅炉SCR装置出口烟气NOX 含量正常范围（）mg/Nm3。","options":{"A":"<30","B":"<60","C":"<50","D":"<40"},"answer":"C"},{"num":389,"type":"单选","question":"#5炉送风机电机额定电流为（）A。","options":{"A":"235","B":"230","C":"240","D":"232"},"answer":"D"},{"num":390,"type":"单选","question":"引风机电机电流为（）A。","options":{"A":"917","B":"950","C":"939","D":"979"},"answer":"D"},{"num":391,"type":"多选","question":"灭火方法、使用器材及注意事项有（）。","options":{"A":"未浸油类的杂物着火时，可用水，泡沫灭火器，沙子等灭火","B":"浸有油类的杂物着火时，可用泡沫灭火器，沙子等灭火","C":"带电设备着火时，应切断电源后用","D":"蒸汽管道或其它高温部件着火，应用泡沫灭火器灭火，不准用"},"answer":"A|B|C|D|"},{"num":392,"type":"单选","question":"一次风机及电机润滑油流量约（）l/min、小于（）l/min报警。","options":{"A":"15,6","B":"10,3","C":"10，6","D":"15,30"},"answer":"C"},{"num":393,"type":"判断","question":"停炉时72小时内尽可能采用闷炉处理，不得强制冷却，以防止氧化皮脱 落。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":394,"type":"多选","question":"锅炉停运前的准备有（）。","options":{"A":"对锅炉系统设备进行全面检查，将设备缺陷进行统计，便于停机后进行处理消缺","B":"检查确认等离子点火装置正常备用。停炉前，对两层等离子点火装置进行试投、确 保其能可靠投入，满足停炉要求","C":"确认燃油系统运行正常，所有油枪试点火，对于有缺陷的油枪，通知检修人员尽快 处理","D":"提前4小时退出机组供热，通知化学专业根据需要，做好锅炉保养各项准备工作。 E、 E.对锅炉各受热面进行一次全面吹灰，其中包括空预器吹灰和S"},"answer":"A|B|C|D|"},{"num":395,"type":"多选","question":"转机紧急停运条件有（）。","options":{"A":"转机运行中出现异常，影响人身或设备安全时","B":"泵、风机、电动机动静磨擦，发生强烈振动","C":"泵、风机、电动机轴承断油或冒烟","D":"电动机冒烟、起火。 E、 E.电动机的电源电缆、接线盒内有明显的短路或损坏危险时。 F、 F.发生危及设备安全运行的其它故障时"},"answer":"A|B|C|D|"},{"num":396,"type":"判断","question":"在额定蒸汽压力下，主、再热汽温度下降到575℃时，15min内应恢复汽 温至正常范围。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":397,"type":"单选","question":"#5锅炉再热汽流量高限（B-MCR工况）（）t/h。","options":{"A":"2400.39","B":"2600.39","C":"2555.39","D":"2502.39"},"answer":"D"},{"num":398,"type":"单选","question":"磨煤机出口温度在（）之间时，磨煤机允许启动。","options":{"A":"65℃～87℃","B":"55℃～77℃","C":"55℃～87℃","D":"65℃～77℃"},"answer":"A"},{"num":399,"type":"单选","question":"左前墙炉膛吹灰疏水门DV1自动开启条件：吹灰蒸汽进汽母管电动隔离门 已全关且该侧疏水温度小于（）。","options":{"A":"130℃","B":"120℃","C":"110℃","D":"100℃"},"answer":"D"},{"num":400,"type":"单选","question":"#5、#6锅炉风箱与炉膛差压低限（）kPa。","options":{"A":"0.8","B":"0.5","C":"0.3","D":"0.6"},"answer":"D"},{"num":401,"type":"多选","question":"负荷调整注意事项有（）。","options":{"A":"负荷变动时，应注意监视炉膛压力、风量、氧量、分离器入口温度、水煤比、主、 再热汽温等参数，并确保不超限","B":"当机组夏季工况、供热流量大等情况下，锅炉出力无法满足要求时，应适当降低负 荷高限限制值，限制锅炉主控输出不超限","C":"机组高负荷运行时，还应注意MEH画面小机阀位指令，如果阀位指令超过85%，应 限制机组负荷","D":"负荷变动时，应注意监视主、再汽温、汽压，各监视段压力、温度等参数，并确保 不超限。 E、 E.机组负荷发生调整，应注意制粉系统的运行台数与机组负荷相匹配，及时启停制粉 系统，从而保证锅炉稳定、经济运行"},"answer":"A|B|C|D|"},{"num":402,"type":"单选","question":"#5锅炉省煤器进口给水温度高限（B-MCR工况）（）℃。","options":{"A":"290","B":"2935.59","C":"296","D":"299"},"answer":"C"},{"num":403,"type":"单选","question":"制粉系统运行时，磨煤机运行时电流正常范围（）A。","options":{"A":"60~80","B":"60~70","C":"70~80","D":"60~70"},"answer":"A"},{"num":404,"type":"单选","question":"#5锅炉主蒸汽压力高限（）Mp","options":{"A":"27.3","B":"28.3","C":"29.3","D":"30.3"},"answer":"B"},{"num":405,"type":"单选","question":"如果停炉后炉前油系统压力上升，达到（）MPa时应开启回油快关阀和手 动门泄压，然后再关闭快关门和手动门。","options":{"A":"3.0","B":"3.2","C":"3.5","D":"4.0"},"answer":"C"},{"num":406,"type":"单选","question":"等离子点火装置冷却水进回水差压正常范围（）MPa。","options":{"A":"0.3~0.5","B":"0.5~0.6","C":"0.2~0.3","D":"0.2~0.0.5"},"answer":"B"},{"num":407,"type":"单选","question":"#6炉水压试验水冷系统锅炉水容积（）","options":{"A":"110m3","B":"120m3","C":"130m3","D":"100m3"},"answer":"D"},{"num":408,"type":"单选","question":"引风机运行中动叶开度不宜大于（）%。","options":{"A":"95","B":"90","C":"85","D":"80"},"answer":"B"},{"num":409,"type":"单选","question":"#5锅炉低温过热器出口壁温高限为（）℃。","options":{"A":"525","B":"535","C":"515","D":"530"},"answer":"D"},{"num":410,"type":"单选","question":"锅炉启动循环泵运行时的泵出口给水流量（）时，锅炉启动循环泵最小 流量阀开。","options":{"A":"<181 t/h","B":"<131 t/h","C":"<161 t/h","D":"<231 t/h"},"answer":"B"},{"num":411,"type":"单选","question":"密封风机轴承温度保护值（）℃。","options":{"A":"≥95","B":"≥90","C":"≥85","D":"≥80"},"answer":"C"},{"num":412,"type":"单选","question":"炉前燃油系统母管压力正常时应通过回油管上的调节门控制，维持进油 压力为（）MPa。","options":{"A":"2.0-2.5","B":"2.5-3.0","C":"3.0-3.2","D":"1.5-3.0"},"answer":"C"},{"num":413,"type":"单选","question":"油枪点火启动中，在汽机同步或主蒸汽流量达到10％以前，应控制燃烧 率保证炉膛出口烟温不大于（）。","options":{"A":"小于560℃","B":"小于550℃","C":"540℃","D":"小于530℃"},"answer":"C"},{"num":414,"type":"单选","question":"#5、#6锅炉磨煤机一次风量高限（）t/h。","options":{"A":"139.5","B":"160.5","C":"150.9","D":"149.5"},"answer":"D"},{"num":415,"type":"单选","question":"滑参数停机时，遵守先降压后降温的原则，逐步把蒸汽参数下滑，并控制锅炉主、 再热蒸汽的降压速率小于（）MPa/min，降温速率小于（）℃/min。","options":{"A":"0.2,1.5","B":"0.1，1.5","C":"0.3,2.0","D":"0.1,2.0"},"answer":"B"},{"num":416,"type":"单选","question":"#5锅炉再热汽温度高限（）℃。","options":{"A":"600","B":"603","C":"608","D":"605"},"answer":"C"},{"num":417,"type":"单选","question":"#5锅炉主蒸汽温度高限（）℃。","options":{"A":"605","B":"610","C":"613","D":"600"},"answer":"B"},{"num":418,"type":"单选","question":"转机轴承温度在转机设备规程没有明确规定的情况下，滑动轴承不超过 （）℃，滚动轴承不超过（）℃。","options":{"A":"85，90","B":"80，90","C":"80，95","D":"85，95"},"answer":"C"},{"num":419,"type":"单选","question":"检查炉前油管道吹扫用辅助蒸汽汽源压力（）Mpa，温度（）℃。","options":{"A":"0.5～1.0，220～300","B":"0.8～1.0，220～300","C":"0.5～1.0，220～250","D":"0.8～1.0，220～250"},"answer":"D"},{"num":420,"type":"单选","question":"等离子点火装置吹扫风压力正常范围（）kPa。","options":{"A":"≤4.0","B":"≤3.5","C":"≤3.0","D":"≤2.5"},"answer":"D"},{"num":421,"type":"单选","question":"密封风母管压力小于（）kPa时，备用风机联动。","options":{"A":"16","B":"20","C":"14","D":"12"},"answer":"C"},{"num":422,"type":"单选","question":"运行中空压机出口的排气温度T1不超过（）℃。","options":{"A":"115","B":"112","C":"109","D":"106"},"answer":"D"},{"num":423,"type":"单选","question":"冷态时投运等离子点火初期，磨煤机出力一般不要超过（）。","options":{"A":"30t/h","B":"35t/h","C":"45t/h","D":"40t/h"},"answer":"B"},{"num":424,"type":"判断","question":"一次风机运行15s后，其出口隔离挡板全关， 延时5s时，一次风机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":425,"type":"多选","question":"辅机设备启动后的检查内容有（）。","options":{"A":"电动机的温升、电流指示符合规定","B":"有关设备的密封部位应密封良好","C":"转动设备和电动机无异常声音和摩擦声","D":"有关输送介质的设备入口、出口压力、流量正常。 E、 E.辅助设备所属系统无漏水、漏汽、漏油现象"},"answer":"A|B|C|D|"},{"num":426,"type":"单选","question":"干燥机运行5～10min后，确认冷媒低压表指示在（）MPa范围，冷媒高 压表指示在（）MPa范围。","options":{"A":"0.25～0.35，1.2～1.6","B":"0.35～0.45，1.2～1.6","C":"0.35～0.45，1.4～1.8","D":"0.25～0.45，1.4～1.8"},"answer":"B"},{"num":427,"type":"单选","question":"制粉系统运行时，液压油压力保护值（）MPa。","options":{"A":"≤2.0","B":"≤2.5","C":"≤3.0","D":"≤3.5"},"answer":"A"},{"num":428,"type":"单选","question":"#5锅炉BCP注水冷却器冷却水量低限为（）m3/h。","options":{"A":"8","B":"6","C":"9","D":"10"},"answer":"C"},{"num":429,"type":"单选","question":"#6锅炉主蒸汽温度正常范围（）℃。","options":{"A":"603","B":"608","C":"611","D":"605"},"answer":"D"},{"num":430,"type":"单选","question":"油枪工作压力为（）MPa。","options":{"A":"2.8","B":"2.5","C":"3.2","D":"3.0"},"answer":"A"},{"num":431,"type":"单选","question":"#5炉引风机液压油压力小于3.5Mpa报警、延时（）秒联启备用泵、延时 （）秒闭锁动叶操作。","options":{"A":"20,25","B":"20,30","C":"15,20","D":"15,30"},"answer":"D"},{"num":432,"type":"单选","question":"减负荷时总煤量（）T/H以下最多只允许4台磨煤机运行","options":{"A":"320","B":"300","C":"240","D":"230"},"answer":"A"},{"num":433,"type":"多选","question":"正常停运的注意事项有（）。","options":{"A":"降负荷过程中，加强对烟气温度的监视，根据烟温的下降情况，及时停止S","B":"当锅炉转入湿态运行工况后，要加强对分离器贮水罐水位、冷凝水箱水位及启动循 环泵运行情况的监视","C":"停机过程中汽机、锅炉要协调好，降温、降压不应有回升现象。停用磨煤机时，应密切 、注意主、再热汽压力、温度、炉膛压力的变化。注意汽温、汽缸壁温下降速度，汽温下降 速度符合停机曲线要求。汽温在10min内急剧下降50℃，应紧急停机","D":"转速下降至510r/min，检查顶轴油泵自启动正常，否则手动启动。检查密封油系统 工作正常，防止发电机进油。E、 E.机组应尽量避免在低负荷下长时间运行，解列前迅速将发电机有功减至接近0，无 功接近为0"},"answer":"A|B|C|D|"},{"num":434,"type":"单选","question":"#5锅炉省煤器进口给水流量<（）延时20sMFT。","options":{"A":"520t/h","B":"550t/h","C":"540t/h","D":"510t/h"},"answer":"D"},{"num":435,"type":"单选","question":"#5炉空气预热器电动机功率为（）kw。","options":{"A":"25","B":"27","C":"22","D":"20"},"answer":"C"},{"num":436,"type":"单选","question":"启动循环泵马达腔温度低限（）℃。","options":{"A":"≮4","B":"≮3","C":"≮2","D":"≮1"},"answer":"C"},{"num":437,"type":"单选","question":"#5炉锅炉启动循环泵电机额定电流为（）A。","options":{"A":"57.3","B":"59.3","C":"56.3","D":"58.3"},"answer":"D"},{"num":438,"type":"单选","question":"#6炉二次风暖风器运行时，水位高一值（）mm。","options":{"A":"400","B":"600","C":"800","D":"700"},"answer":"D"},{"num":439,"type":"单选","question":"制粉系统运行时，分离器转速正常范围（）rpm。","options":{"A":"550~750","B":"650~750","C":"650~700","D":"550~700"},"answer":"B"},{"num":440,"type":"单选","question":"制粉系统运行时，磨煤机线圈温度正常范围（）℃。","options":{"A":"≤100","B":"≤110","C":"≤115","D":"≤120"},"answer":"B"},{"num":441,"type":"多选","question":"下列属于滑参数停机过程中，应密切监视或注意的情况是（）。","options":{"A":"滑停过程中，应注意主、再热汽温偏差小于28℃，并保证主、再热汽有80℃以上的 过热度","B":"控制高、中压缸金属温降率和上、下缸温差在TSE温度裕度控制限额内。汽温在10 min内急剧下降50℃，应紧急停机","C":"负荷500MW以下保持3台磨煤机运行；继续降负荷时，应注意防止磨煤机振动跳闸 ，350MW以下保持2台磨煤机运行，注意石子煤排放","D":"滑参数停机过程中，每降低一档主蒸汽温度或负荷，应等再热蒸汽温度下降后再继 续降温。 E、 E.滑参数停机过程中，不准进行影响高、中压主汽门、调门开度的试验。严禁做汽轮 机超速试验"},"answer":"A|B|C|D|"},{"num":442,"type":"单选","question":"吹灰系统运行时，高温区长吹压力为（）MPa。","options":{"A":"3.8","B":"2.5","C":"3.2","D":"3.0"},"answer":"A"},{"num":443,"type":"单选","question":"制粉系统运行时，液压站油箱温度正常范围（）℃。","options":{"A":"25~65","B":"25~55","C":"35~55","D":"35~65"},"answer":"B"},{"num":444,"type":"单选","question":"燃油泄漏试验中，进油跳闸阀泄漏试验通过后，则开燃油泄漏试验阀对系统进 行充油，60s后关闭燃油泄漏试验阀。若燃油跳闸阀后压力（）则充油完成。","options":{"A":"≥2.5Mp","B":"≥4.0Mp","C":"≥2.0Mp","D":"≥3.0Mp"},"answer":"D"},{"num":445,"type":"单选","question":"#5炉喘振报警值：A引风机：（）Pa；B引风机（）Pa。","options":{"A":"2300,1860","B":"2300,1830","C":"2400,1860","D":"2400,1830"},"answer":"D"},{"num":446,"type":"多选","question":"干排渣系统报警有（）。","options":{"A":"渣仓料位高","B":"一级钢带跳闸","C":"碎渣机电流大","D":"二级钢带电流大 E、 E.二级清扫链跳闸"},"answer":"A|B|C|D|"},{"num":447,"type":"单选","question":"制粉系统运行时，液压油压力高报警值（）MPa。","options":{"A":"≥16","B":"≥15.5","C":"≥14.5","D":"≥15"},"answer":"D"},{"num":448,"type":"单选","question":"等离子点火启动中，投运磨煤机A（或D）暖风器，暖风器后一次风温160℃左右，调整各粉管一次风流速（）左右。","options":{"A":"28～30m/s","B":"18～20m/s","C":"8～15m/s","D":"20～25m/s"},"answer":"B"},{"num":449,"type":"单选","question":"#5锅炉主蒸汽压力保护跳闸值（）Mp","options":{"A":"28.3","B":"29.3","C":"29.8","D":"30.6"},"answer":"D"},{"num":450,"type":"多选","question":"磨煤机出口温度高原因是（）。","options":{"A":"磨煤机内部着火","B":"风温自动控制系统故障","C":"风门挡板故障","D":"磨内煤量过低。 E、 E.断煤或落煤管堵塞"},"answer":"A|B|C|D|"},{"num":451,"type":"单选","question":"当两台火检风机均跳闸或冷却风母管压力（）Kp","options":{"A":"小于5","B":"小于4","C":"小于6","D":"小于2"},"answer":"B"},{"num":452,"type":"单选","question":"热态启动过程中，当分离器压力（）时，若开启361阀会对疏水系统造成 冲击，注意控制给水流量和贮水罐水位的变化。","options":{"A":"＞11MP","B":"＞10MP","C":"＞13MP","D":"＞12MP"},"answer":"D"},{"num":453,"type":"单选","question":"#5锅炉垂直水冷壁出口壁温高限为（）℃。","options":{"A":"488","B":"498","C":"478","D":"468"},"answer":"B"},{"num":454,"type":"单选","question":"维持油枪投运层的中心风压力在kPa左右。（）","options":{"A":"0.33","B":"0.37","C":"0.41","D":"0.45"},"answer":"B"},{"num":455,"type":"单选","question":"锅炉疏水泵启动时，应确认冷凝水箱水位（）mm。","options":{"A":"高于500","B":"高于400","C":"高于300","D":"高于200"},"answer":"C"},{"num":456,"type":"单选","question":"机组负荷由300MW升至1000MW时，#5炉主汽温度和再热汽温为（），# 6炉主汽温度和再热汽温为（）。","options":{"A":"605/605℃，605/620℃","B":"605/605℃，600/620℃","C":"600/600℃，600/620℃","D":"600/600℃，600/600℃"},"answer":"C"},{"num":457,"type":"判断","question":"化学清洗不仅限于在蒸发过程中容易残留杂质和运行中容易产生结垢的 水空间（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":458,"type":"多选","question":"空预器的运行注意事项有（）。","options":{"A":"定期检查传动装置的运行情况，减速器润滑油箱油位指示正常（约2/3），温升小 于60℃","B":"定期检查空预器导向轴承润滑油系统的油温。当温度达到55℃时，导向轴承稀油站主油 泵启动，达60℃时，备用油泵启动；油温低于50时备用油泵停止，油温低于45℃，主油 泵停运","C":"导向轴承和支承轴承油温达70℃时超温报警；温度超过85℃时应停止空预器运行","D":"导向轴承油系统运行时油压应稳定，发现油泵出口油压逐步上升，滤网差压达到15 0kP"},"answer":"A|B|C|D|"},{"num":459,"type":"单选","question":"#5炉启动循环泵电机电流正常范围（）A。","options":{"A":"＜59.32","B":"＜58","C":"＜56","D":"＜60"},"answer":"B"},{"num":460,"type":"多选","question":"锅炉疏水泵联锁停止条件有（）。","options":{"A":"锅炉疏水系统冷凝水箱水位低于<1300mm时，选为“辅泵”的疏水泵联锁停止","B":"锅炉疏水系统冷凝水箱水位低于<300mm延时1800s联锁停止选为“主泵”的疏水泵","C":"锅炉疏水系统冷凝水箱液位低于<150mm时联跳选为“主泵”的疏水泵","D":"锅炉疏水泵运行延时60s，且其出口电动门全关"},"answer":"A|B|C|D"},{"num":461,"type":"单选","question":"当机组负荷降至500MW时，要求机组稳定运行（）min，同时将主蒸汽压 力逐渐降至（）。MPa","options":{"A":"100,12.0","B":"120,120","C":"120，13.0","D":"100,13.5"},"answer":"C"},{"num":462,"type":"单选","question":"#6炉一次风机电机电流为（）A。","options":{"A":"320","B":"326","C":"315","D":"330"},"answer":"B"},{"num":463,"type":"单选","question":"#5、#6锅炉空预器出口烟温高限（）℃。","options":{"A":"135","B":"125","C":"145","D":"155"},"answer":"C"},{"num":464,"type":"单选","question":"#5锅炉磨煤机差压高限（）Pa。","options":{"A":"6350","B":"7350","C":"5350","D":"6800"},"answer":"B"},{"num":465,"type":"单选","question":"空预器运行中辅电机电流#5炉低限（）A，#6炉低限（）A。","options":{"A":"25,30","B":"30,25","C":"45,94","D":"94,45"},"answer":"A"},{"num":466,"type":"单选","question":"锅炉点火时炉膛通风量不得少于（ ）BMCR风量。","options":{"A":"20%","B":"35%","C":"30%","D":"40%"},"answer":"C"},{"num":467,"type":"单选","question":"当吹灰母管压力低于（）MPa时其他区域长吹和半长吹吹灰器退出。","options":{"A":"2.5","B":"3.2","C":"3.5","D":"3.0"},"answer":"D"},{"num":468,"type":"单选","question":"#5锅炉磨煤机差压正常范围（）Pa。","options":{"A":"<5050","B":"<4870","C":"<6870","D":"<5870"},"answer":"D"},{"num":469,"type":"单选","question":"#5炉烟温探针电机额定电流为（）kw。","options":{"A":"1.65","B":"1.75","C":"1.55","D":"1.85"},"answer":"C"},{"num":470,"type":"单选","question":"一次风机轴承温度应（）℃。","options":{"A":"＜110","B":"＜90","C":"＜70","D":"＜80"},"answer":"D"},{"num":471,"type":"单选","question":"总煤量240T/H以下只允许3台磨煤机运行。（）","options":{"A":"130","B":"230","C":"300","D":"240"},"answer":"D"},{"num":473,"type":"单选","question":"#6锅炉低温再热器出口壁温高限为（）℃。","options":{"A":"603","B":"605","C":"608","D":"609"},"answer":"D"},{"num":474,"type":"单选","question":"#6锅炉主蒸汽温度低限（）℃。","options":{"A":"595","B":"585","C":"590","D":"591"},"answer":"C"},{"num":475,"type":"单选","question":"#6锅炉一次热风温度正常范围（）℃。","options":{"A":"345","B":"350","C":"341","D":"335"},"answer":"C"},{"num":476,"type":"单选","question":"机组负荷由300MW升至1000MW时，确认机侧主蒸汽压力#5机为（），# 6机（）。","options":{"A":"25.25MP","B":"26.25MP","C":"26.25MP","D":"25.25MP"},"answer":"B"},{"num":477,"type":"单选","question":"一般情况下开机加负荷时","options":{"A":"300","B":"240","C":"130","D":"320"},"answer":"C"},{"num":478,"type":"判断","question":"转动辅机的轴承温度规定：滑动轴承80℃,滚动轴承95℃.（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":479,"type":"单选","question":"水压试验用水应采用加氨和朕氨处理的除盐水，其PH值为（）。","options":{"A":"7-8.5","B":"10-10.5","C":"9-9.5","D":"11-12.5"},"answer":"B"},{"num":480,"type":"判断","question":"如果停炉后炉前油系统压力上升，达到3.2MPa时应开启回油快关阀和手 动门泄压，然后再关闭快关门和手动门。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":481,"type":"单选","question":"低温省煤器运行时，水侧压损（）MPa。","options":{"A":"≤0.1","B":"≤0.3","C":"≤0.25","D":"≤0.2"},"answer":"D"},{"num":482,"type":"单选","question":"锅炉MFT联锁保护：炉膛压力高高（），延时3s。","options":{"A":"≥4.0kP","B":"≥3.0kP","C":"≥2.0kP","D":"≥3.5kP"},"answer":"B"},{"num":483,"type":"单选","question":"锅炉启动循环泵电机腔室温度高（），锅炉启动循环泵跳闸。","options":{"A":">75℃","B":">55℃","C":">60℃","D":">65℃"},"answer":"D"},{"num":484,"type":"单选","question":"制粉系统运行时，磨煤机运行时电流高报警为（）A。","options":{"A":"≥99","B":"≥129","C":"≥109","D":"≥119"},"answer":"D"},{"num":485,"type":"单选","question":"当冷媒低压为 （）MPa时，干燥机低压保护动作跳闸。","options":{"A":"0.1","B":"0.4","C":"0.3","D":"0.2"},"answer":"D"},{"num":486,"type":"判断","question":"锅炉启动循环泵电机注水结束后，锅炉才能上水，可以通过泵侧向马达 腔进水。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":487,"type":"单选","question":"#6锅炉包墙过热器出口壁温高限为（）℃。","options":{"A":"476","B":"486","C":"766","D":"466"},"answer":"B"},{"num":488,"type":"单选","question":"锅炉MFT且空预器进口烟气温度（），空预器主驱动马达允许停止。","options":{"A":"<130℃","B":"<160℃","C":"<140℃","D":"<150℃"},"answer":"D"},{"num":489,"type":"单选","question":"在进行锅炉检查及准备时，开启燃油跳闸阀、回油快关阀后，调炉前燃 油母管压力应调整为（），进行炉前油循环。","options":{"A":"2.0MP","B":"4.0MP","C":"3.0MP","D":"2.5MP"},"answer":"C"},{"num":490,"type":"单选","question":"等离子点火启动中，启动磨煤机A（或D）的动态分离器，转速调整至600－650r/min ，建立磨煤机一次风量（）以上，投运磨煤机A（或D）暖风器。","options":{"A":"115t/h","B":"95t/h","C":"105t/h","D":"125t/h"},"answer":"C"},{"num":491,"type":"单选","question":"#6炉二次风暖风器运行时，疏水泵电流低于（）A时手动开启再循环门。","options":{"A":"85","B":"98.46","C":"60","D":"70"},"answer":"C"},{"num":493,"type":"判断","question":"在机组高负荷期间不得进行排渣系统全停工作，如有特殊工作，排渣系统必须停止才能进行工作，申请的工作时间不能超过2小时。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":494,"type":"单选","question":"#6锅炉高温过热器出口壁温高限为（）℃。","options":{"A":"628","B":"626","C":"623","D":"629"},"answer":"C"},{"num":495,"type":"单选","question":"#5炉润滑油滤网差压（）。","options":{"A":"< 0.5","B":"< 0.25","C":"< 0.18","D":"< 0.30"},"answer":"C"},{"num":496,"type":"单选","question":"#6炉启动分离器设计压力为（）MPa。","options":{"A":"32.1","B":"33.08","C":"33.3","D":"33.2"},"answer":"B"},{"num":497,"type":"单选","question":"制粉系统运行时，磨煤机入口一次风量低报警值（）t/h。","options":{"A":"≤100","B":"≤112","C":"≤97","D":"≤105"},"answer":"D"},{"num":498,"type":"单选","question":"一次风机轴承振动值达（）mm/s时发出报警，达（）mm/s时，延时5s风 机跳闸。","options":{"A":"6.3，10.3","B":"4.6，10","C":"6.3，10","D":"4.6，10.3"},"answer":"C"},{"num":499,"type":"单选","question":"密封风挡板已开且密封风差压不低（）时，磨煤机允许启动。","options":{"A":">2.5kP","B":">1.5kP","C":">1.0kP","D":">2.0kP"},"answer":"D"},{"num":500,"type":"单选","question":"引风机A轴承温度（），#5炉引风机许可启动。","options":{"A":"<75℃","B":"<80℃","C":"<65℃","D":"<70℃"},"answer":"D"},{"num":501,"type":"多选","question":"下列属于机组启动原则的有（）。","options":{"A":"汽机热态启动时，机、炉、电三专业设备、系统或","B":"值长是机组启动的统一指挥人，机长是机组启动的操作负责人，主控员是专业内设 备操作的负责人","C":"机组启动时，严禁解列重要保护，因设备问题确实不能投入的，须经总工程师批准 。并制定好相应的安全技术措施","D":"大修后的机组必须完成主设备和各辅助设备系统的分部试运和调试工作。 E、 E.设备经过大、小修后，不需要有设备异动报告"},"answer":"A|B|C|D"},{"num":502,"type":"多选","question":"下列属于机组总体检查及准备的是（）。","options":{"A":"机组各专业所属设备的检修工作全部结束，所有缺陷消除，所有工作票已严格按有 关规定注销","B":"楼梯、栏杆、平台完整，通道畅通无杂物，各种临时设施已拆除","C":"管道及设备保温完好，各支吊架、支承弹簧等完好，膨胀间隙正常，保证各部件能 自由膨胀","D":"柴油发电机处正常备用状态"},"answer":"A|B|C|D"},{"num":503,"type":"单选","question":"停炉后，汽水分离器出口压力降至（）MPa时，迅速放尽锅内存水，利用 炉膛余热烘干锅炉受热面。","options":{"A":"0.8","B":"0.5","C":"0.6","D":"1.0"},"answer":"A"},{"num":504,"type":"判断","question":"短吹温度设定值365℃、压力设定值2.5MPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":505,"type":"单选","question":"#6炉润滑油滤网差压（）MP","options":{"A":"< 0.18","B":"< 0.25","C":"< 0.5","D":"< 0.30"},"answer":"C"},{"num":506,"type":"单选","question":"#6锅炉主蒸汽压力正常范围（）Mp","options":{"A":"≤28.3","B":"≤27.3","C":"≤29.3","D":"≤30.3"},"answer":"C"},{"num":507,"type":"单选","question":"空压机排气温度正常范围（）℃。","options":{"A":"≤93","B":"≤96","C":"≤99","D":"≤106"},"answer":"C"},{"num":508,"type":"单选","question":"等离子点火启动中，磨煤机出口温度到（），确认启动条件满足后启磨 。","options":{"A":"55℃～77℃","B":"65℃～77℃","C":"65℃～87℃","D":"55℃～87℃"},"answer":"C"},{"num":509,"type":"单选","question":"制粉系统运行时，润滑油分配器油压低报警（）MPa。","options":{"A":"≤0.13","B":"≤0.12","C":"≤0.10","D":"≤0.11"},"answer":"D"},{"num":510,"type":"单选","question":"制粉系统运行时，磨煤机出口温度保护值（）℃。","options":{"A":"≥100","B":"≥105","C":"≥97","D":"≥107"},"answer":"D"},{"num":511,"type":"判断","question":"#6炉引风机轴承温度应＜70℃，≥90℃时报警，当温度达到110℃，延时5s 风机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":512,"type":"单选","question":"等离子点火装置吹扫风压力正常范围（）kPa。","options":{"A":"2.0~5.0","B":"2.0~6.0","C":"3.0~6.0","D":"3.0~5.0"},"answer":"C"},{"num":513,"type":"单选","question":"#6炉二次风暖风器运行时，疏水泵电流大于（）A时手动关闭再循环门。","options":{"A":"60","B":"98.46","C":"70","D":"85"},"answer":"D"},{"num":514,"type":"单选","question":"#6锅炉主蒸汽压力高限（）Mp","options":{"A":"30.6","B":"30.2","C":"30.8","D":"32.6"},"answer":"B"},{"num":515,"type":"多选","question":"辅机试运行注意事项有（）。","options":{"A":"设备运行需要监视的压力、流量表一次门开启，所有运行需要监视的表计投入并检 查指示正确","B":"设有轴承温度、振动、电机线圈温度测点的转机试转前上述监视表记必须投入，如 转动设备设置有保护，保护装置必须投入","C":"试转的任何操作都应考虑不影响其他设备及系统的安全，转动设备检修后的试转， 须确认其电动机转向正确","D":"启动6KV设备及重要的380V设备，应派专人就地监视。启动时，就地人员站在轴向 位置并离事故按钮较近处，发现问题，立即按事故按钮停止转机 E、 E.设备异动后通过试运行，应及时对系统图和规程进行修改并将异动后设备运行注意 事项和运行操作方法通知到各运行值"},"answer":"A|B|C|D|"},{"num":516,"type":"单选","question":"等离子点火装置火检冷却风压力正常范围（）kPa。","options":{"A":"3~8","B":"3~12","C":"6~12","D":"6~8"},"answer":"B"},{"num":517,"type":"判断","question":"吹灰器正常投入顺序应为：空气预热器－烟道吹灰器－炉膛吹灰器－空 气预热器（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":518,"type":"单选","question":"启动循环泵入口水温和泵壳温差正常范围（）℃。","options":{"A":"＜33","B":"＜36","C":"＜39","D":"＜42"},"answer":"C"},{"num":519,"type":"单选","question":"#6炉空气预热器电动机功率为（）kw。","options":{"A":"43","B":"45","C":"40","D":"48"},"answer":"D"},{"num":520,"type":"判断","question":"锅炉点火前和熄火后必须对炉膛及尾部受热面进行充分吹扫。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":521,"type":"单选","question":"当机组负荷降至350MW时，控制滑压时间在（）min左右，主蒸汽压力降 至（）MPa。","options":{"A":"120,9.9","B":"120,8.9","C":"150,9.9","D":"150，8.9"},"answer":"D"},{"num":522,"type":"单选","question":"#5炉烟温探针电机功率为（）kw。","options":{"A":"0.65","B":"0.55","C":"0.45","D":"0.75"},"answer":"B"},{"num":523,"type":"单选","question":"水压试验时环境温度应在（）以上，否则应有可靠的防寒防冻措施。","options":{"A":"3℃","B":"4℃","C":"5℃","D":"2℃"},"answer":"C"},{"num":524,"type":"判断","question":"#6锅炉主蒸汽温度正常值605℃。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":525,"type":"单选","question":"#5、#6炉引风机电机轴承温度应（）℃。","options":{"A":"＜80","B":"＜75","C":"＜70","D":"＜65"},"answer":"C"},{"num":526,"type":"单选","question":"等离子点火装置二级载体风压力正常值（）kPa。","options":{"A":"30","B":"50","C":"80","D":"100"},"answer":"B"},{"num":527,"type":"单选","question":"一次风机电机轴承温度达到（）℃，延时5s风机跳闸。","options":{"A":"70","B":"80","C":"90","D":"100"},"answer":"B"},{"num":528,"type":"单选","question":"#5炉启动循环泵出口流量正常范围（）t/h。","options":{"A":"＞760","B":"＞616","C":"＞273","D":"＞131"},"answer":"D"},{"num":529,"type":"单选","question":"风机润滑油流量不低（），一次风机启动许可。","options":{"A":">10 l/min","B":">8 l/min","C":">6 l/min","D":">5 l/min"},"answer":"C"},{"num":530,"type":"单选","question":"正常情况下或做动平衡试验时，500kW以上的电动机每次启动的间隔时间 （）。","options":{"A":"不小于0.5小时","B":"不小于1小时","C":"不小于1.5小时","D":"不小于2小时"},"answer":"D"},{"num":531,"type":"单选","question":"#5炉一次风机电机功率为（）kw。","options":{"A":"2500","B":"2900","C":"2700","D":"2800"},"answer":"B"},{"num":532,"type":"判断","question":"其他长吹半长吹温度设定值365℃、压力设定值3.8MPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":533,"type":"单选","question":"#6锅炉后竖井吊挂管过热器出口壁温（前/后）高限为（）℃。","options":{"A":"500/505","B":"507/506","C":"500/503","D":"507/503"},"answer":"D"},{"num":534,"type":"单选","question":"#6炉锅炉启动循环泵电机额定电流为（）A。","options":{"A":"59.32","B":"60.32","C":"61.50","D":"57.50"},"answer":"A"},{"num":535,"type":"单选","question":"#5炉启动分离器设计压力为（）MPa。","options":{"A":"32.1","B":"33.1","C":"31.1","D":"30.1"},"answer":"A"},{"num":536,"type":"单选","question":"#5、#6锅炉空预器冷端平均温度高限（）℃。","options":{"A":"65.5","B":"68.3","C":"63.3","D":"66.5"},"answer":"B"},{"num":537,"type":"判断","question":"对应引风机跳闸，延时2s时，送风机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":538,"type":"单选","question":"温态启动时，500 MW以上时可以加大到（）。","options":{"A":"10MW/min","B":"20MW/min","C":"15 MW/min","D":"5 MW/min"},"answer":"B"},{"num":539,"type":"多选","question":"冬季锅炉机组停运后注意采取防冻措施有（）","options":{"A":"每年冬季来临前，对锅炉设备及系统进行一次全面防冻检查，确保各处保温完好","B":"冬季机组停用期间尽可能采用干式保养，采用湿保养时，应定期启动锅炉启动循环 泵运行","C":"投入相关的伴热系统","D":"设备冷却水系统应采用投入运行或者将其放空，以防设备损坏。 E、 E.若炉水已放空，应将锅炉启动循环泵壳内存水及电机腔室内的水放尽，必要时在锅炉启动循环泵泵壳外表增设伴热装置"},"answer":"A|B|C|D|"},{"num":540,"type":"单选","question":"冬季油箱油温（）℃以下时，开启冷油器油侧旁路门，关闭冷油器进油门 。","options":{"A":"15","B":"20","C":"10","D":"5"},"answer":"A"},{"num":541,"type":"多选","question":"遇有下列哪种情况时（），应汇报总工程师（或生产副总），并由总工 程师（或生产副总）决定机组启动方案。","options":{"A":"机组跳闸后，原因未查明或缺陷未消除时","B":"","C":"发变组一次系统有异常、发电机励磁系统有异常","D":"主变冷却器不能正常投运。 E、 E.脱硫或脱硝系统故障，不能正常投运"},"answer":"A|B|C|D|"},{"num":542,"type":"单选","question":"#5炉省煤器实际工作压力（）MPa。","options":{"A":"34.3","B":"36.6","C":"31.76","D":"33.4"},"answer":"C"},{"num":543,"type":"单选","question":"火检冷却风压力低低（）kPa或火检冷却风机均停，延时60s时，MFT动作 。","options":{"A":"<5","B":"<3","C":"<3","D":"<4"},"answer":"D"},{"num":544,"type":"判断","question":"主厂房及相关区域照明良好，事故照明正常不可随时投运。（） A、 正确B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":545,"type":"判断","question":"#5锅炉再热汽温度正常值603℃。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":546,"type":"单选","question":"过热或再热烟气挡板单边开度不小于（）%；任何时候都不允许两边开度 之和小于（）%。","options":{"A":"10,100","B":"30,80","C":"20,100","D":"30,100"},"answer":"C"},{"num":547,"type":"判断","question":"主、再蒸汽温达：#5炉616/630℃、#6炉613/611℃时报警，应将汽温调至 正常。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":548,"type":"单选","question":"制粉系统运行时，磨煤机出口温度高报警值（）℃。","options":{"A":"≥100","B":"≥87","C":"≥97","D":"≥90"},"answer":"C"},{"num":549,"type":"判断","question":"水压试验时环境温度应在5℃以上，否则应有可靠的防寒防冻措施。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":550,"type":"判断","question":"火检冷却风机电机额定电流为40.5A。（） A、 正确B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":551,"type":"单选","question":"一次风机电机电压为（）kv。","options":{"A":"6.1","B":"6.2","C":"6.3","D":"6"},"answer":"D"},{"num":552,"type":"单选","question":"制粉系统运行时，磨煤机入口一次风量正常范围（）t/h。","options":{"A":"125~160","B":"125~150","C":"112~150","D":"112~160"},"answer":"C"},{"num":553,"type":"单选","question":"启动循环泵电机冷却器的闭式水压力正常范围（）MPa。","options":{"A":"＞0.35","B":"＞0.6","C":"＞0.5","D":"＞0.4"},"answer":"D"},{"num":554,"type":"多选","question":"二级钢带跳闸条件有（）。","options":{"A":"二级钢带失速信号","B":"二级钢带过载故障","C":"渣仓入口关断门关闭","D":"渣仓料位高高"},"answer":"A|B|C|D"},{"num":555,"type":"单选","question":"#5锅炉水平烟道底部出口壁温高限为（）℃。","options":{"A":"500","B":"505","C":"495","D":"515"},"answer":"B"},{"num":556,"type":"单选","question":"#6炉启动循环泵出口流量正常范围（）t/h。","options":{"A":"＞760","B":"＞273","C":"＞616","D":"＞131"},"answer":"B"},{"num":557,"type":"单选","question":"等离子点火装置一次风风速低报警值（）m/s。","options":{"A":"≤11","B":"≤13","C":"≤15","D":"≤17"},"answer":"D"},{"num":558,"type":"单选","question":"空压机冷却水压力正常值（）MPa。","options":{"A":"0.3-0.5","B":"0.2-0.3","C":"0.3-0.4","D":"0.4-0.6"},"answer":"A"},{"num":559,"type":"单选","question":"一般情况下，建议动叶开度在（）％以上运行；不允许出口挡板关闭情 况下运行。","options":{"A":"20","B":"15","C":"10","D":"5"},"answer":"A"},{"num":560,"type":"单选","question":"引风机电机轴承温度高（），延时5s，引风机跳闸。","options":{"A":">80℃","B":">95℃","C":">90℃","D":">100℃"},"answer":"A"},{"num":561,"type":"单选","question":"送风机及电机润滑油箱油温()℃。","options":{"A":"20～40","B":"30～40","C":"25～30","D":"30～50"},"answer":"B"},{"num":562,"type":"单选","question":"磨煤机电机额定电流为（）A。","options":{"A":"120","B":"117","C":"118","D":"114"},"answer":"D"},{"num":563,"type":"判断","question":"a)一次风机运行中动叶开度不宜大于90%，达到90%时闭锁增，电机电流 禁止超过：#5炉326A，#6炉332A。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":564,"type":"判断","question":"锅炉上水时间：夏季不少于4小时，冬季不少于2小时。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":565,"type":"单选","question":"制粉系统运行时，密封风与一次风差压低报警值（）kPa。","options":{"A":"≤2.5","B":"≤2.0","C":"≤1.5","D":"≤1.0"},"answer":"C"},{"num":566,"type":"单选","question":"#5锅炉主蒸汽流量高限（B-MCR工况）（）t/h。","options":{"A":"2991.3","B":"2981.3","C":"2891.3","D":"2951.3"},"answer":"A"},{"num":567,"type":"单选","question":"#6炉一次汽水系统工作压力水压试验（）","options":{"A":"32.8MP","B":"33.6MP","C":"36.6MP","D":"35.6MP"},"answer":"C"},{"num":568,"type":"单选","question":"#6炉引风机电机轴承温度（）℃时，延时5s风机跳闸。","options":{"A":"80","B":"85","C":"90","D":"95"},"answer":"A"},{"num":569,"type":"单选","question":"一般情况下，建议动叶开度在（）％以上运行；不允许在进口挡板或出 口挡板关闭情况下运行。","options":{"A":"5","B":"10","C":"15","D":"20"},"answer":"D"},{"num":570,"type":"单选","question":"#5炉引风机电机轴承温度（）℃时，延时5s风机跳闸。","options":{"A":"75","B":"80","C":"85","D":"90"},"answer":"C"},{"num":571,"type":"单选","question":"引风机A动叶位置反馈（），#5炉引风机许可启动。","options":{"A":"＜5%","B":"＜6%","C":"＜8%","D":"＜10%"},"answer":"A"},{"num":572,"type":"单选","question":"制粉系统运行时，推力瓦油温保护值（）℃。","options":{"A":"≥60","B":"≥70","C":"≥50","D":"≥55"},"answer":"B"},{"num":573,"type":"单选","question":"#6锅炉再热汽温度高限（）℃。","options":{"A":"626","B":"623","C":"628","D":"625"},"answer":"C"},{"num":574,"type":"单选","question":"#6炉锅炉启动循环泵扬程为（）m。","options":{"A":"131","B":"135","C":"138","D":"140"},"answer":"A"},{"num":575,"type":"单选","question":"送风机液压油压力在（）Mpa左右，","options":{"A":"4.0","B":"3.5","C":"3.0","D":"2.5"},"answer":"C"},{"num":576,"type":"单选","question":"#5炉引风机液压油压力正常值在（）Mpa左右。","options":{"A":"4.0","B":"3.0","C":"0.35","D":"0.25"},"answer":"A"},{"num":577,"type":"判断","question":"锅炉启动点火方式有两种：油枪点火启动和等离子点火启动。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":578,"type":"单选","question":"#5锅炉SCR装置出口烟气NOX 含量正常范围（）mg/Nm3。","options":{"A":"<50","B":"<70","C":"<60","D":"<80"},"answer":"C"},{"num":579,"type":"单选","question":"炉前燃油母管压力正常（），锅炉许可点油枪。","options":{"A":">4.0MP","B":">3.5MP","C":">3.0MP","D":">2.5MP"},"answer":"C"},{"num":580,"type":"单选","question":"空预器运行中支撑轴承和导向轴承油温油温高限（）℃。","options":{"A":"45","B":"70","C":"55","D":"85"},"answer":"B"},{"num":581,"type":"单选","question":"当第一台磨煤机的给煤量达到（）t/h以后才投运第二台磨煤机，投入第 二台磨煤机时控制总煤量突变不大于（）t/h","options":{"A":"60,10","B":"65，10","C":"65,15","D":"60,5"},"answer":"B"},{"num":582,"type":"单选","question":"等离子点火启动中，启动给煤机A（或D），煤量指令（），稳定后适当 提高煤量至（）。","options":{"A":"30T/H，30～35t/h","B":"30T/H，35～45t/h","C":"26T/H，35～45t/h","D":"26T/H，30～35t/h"},"answer":"D"},{"num":583,"type":"单选","question":"吹灰系统运行时，其他区域长吹、半长吹压力为（）MPa。","options":{"A":"3.8","B":"2.5","C":"3.0","D":"3.2"},"answer":"D"},{"num":584,"type":"判断","question":"#5炉一次风机电机电流为326A。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":585,"type":"单选","question":"制粉系统运行时，磨辊油温高报警值（）℃。","options":{"A":"≥85","B":"≥90","C":"≥95","D":"≥100"},"answer":"D"},{"num":586,"type":"单选","question":"冷态启动时，500 MW以上时可以加大到（）。","options":{"A":"20 MW/min","B":"15 MW/min","C":"10MW/min","D":"5 MW/min"},"answer":"C"},{"num":587,"type":"单选","question":"磨煤机润滑油滤网差压应小于（）MPa。","options":{"A":"0.13","B":"0.10","C":"0.11","D":"0.12"},"answer":"D"},{"num":588,"type":"判断","question":"压缩空气系统正常运行时保持母管压力在0.60～0.80MPa左右。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":589,"type":"单选","question":"#5锅炉主蒸汽温度低限（）℃。","options":{"A":"595","B":"591","C":"590","D":"585"},"answer":"C"},{"num":590,"type":"单选","question":"送风机电机润滑油流量正常（），送风机许可启动。","options":{"A":">4 l/min","B":">6 l/min","C":">8 l/min","D":">10 l/min"},"answer":"B"},{"num":591,"type":"单选","question":"#5、#6锅炉磨煤机出口温度保护跳闸值为（）℃","options":{"A":"117","B":"97","C":"107","D":"87"},"answer":"C"},{"num":592,"type":"判断","question":"一次风机油站油箱油温不高（＜30℃）S时，一次风机油站电加热启动。 （） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":593,"type":"单选","question":"炉前油供油压力低低（）且任一油角阀开，延时3s，锅炉OFT动作。","options":{"A":"<1.0MP","B":"<1.2MP","C":"<1.6MP","D":"<1.8MP"},"answer":"C"},{"num":594,"type":"单选","question":"一次风机液压油压力（）MPa时报警且闭锁动叶操作、同时联启备用油泵 。","options":{"A":"小于0.8","B":"小于1.0","C":"小于1.2","D":"小于1.5"},"answer":"A"},{"num":595,"type":"单选","question":"锅炉疏水系统冷凝水箱液位低于（）时联跳选为“主泵”的疏水泵。","options":{"A":"<100mm","B":"<200mm","C":"<150mm","D":"<250mm"},"answer":"C"},{"num":596,"type":"单选","question":"磨煤机推力瓦油温（）时，磨煤机允许启动。","options":{"A":"＜50℃","B":"＜60℃","C":"＜40℃","D":"＜55℃"},"answer":"A"},{"num":597,"type":"单选","question":"送风机运行中电机电流禁止超过（）A。","options":{"A":"212","B":"252","C":"242","D":"232"},"answer":"D"},{"num":598,"type":"单选","question":"#5、#6锅炉点火油压力（）MPa时OFT。","options":{"A":"≤1.8","B":"≤1.6","C":"≤2.0","D":"≤3.0"},"answer":"B"},{"num":599,"type":"判断","question":"一次风机电机、风机润滑油压力低（<0.1MPa）且电机润滑油流量低（<6l /min）延5s时，一次风机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":600,"type":"单选","question":"#5、#6锅炉空预器出口烟温低限（）℃。","options":{"A":"95","B":"125","C":"115","D":"105"},"answer":"D"},{"num":601,"type":"判断","question":"喘振报警值：A一次风机：2180Pa；B一次风机1830Pa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":602,"type":"单选","question":"一次风机轴承温度不高（），一次风机启动许可。","options":{"A":"<65℃","B":"<75℃","C":"<70℃","D":"<80℃"},"answer":"D"},{"num":603,"type":"单选","question":"引风机轴承温度高（），延时5s，引风机跳闸。","options":{"A":">80℃","B":">95℃","C":">90℃","D":">100℃"},"answer":"C"},{"num":604,"type":"单选","question":"#6锅炉低温过热器出口壁温高限为（）℃。","options":{"A":"517","B":"537","C":"547","D":"527"},"answer":"D"},{"num":605,"type":"单选","question":"#5炉水压试验水冷系统锅炉水容积（）","options":{"A":"90.8m3","B":"92.5m3","C":"97.5m3","D":"95.5m3"},"answer":"A"},{"num":606,"type":"单选","question":"当吹灰母管压力低于（）MPa时高温区长吹退出。","options":{"A":"3.0","B":"3.5","C":"3.2","D":"2.5"},"answer":"B"},{"num":607,"type":"单选","question":"#5、#6锅炉点火油压力正常范围为（）MPa。","options":{"A":"3.5","B":"3.0","C":"2.0","D":"4.0"},"answer":"B"},{"num":608,"type":"单选","question":"转动设备轴承振动在转动设备规程没有明确规定的情况下，转速1000r/mi n时振动允许双幅值（）mm。","options":{"A":".005","B":"0.085","C":"0.1","D":"0.12"},"answer":"C"},{"num":609,"type":"判断","question":"在减负荷过程，800MW以前对炉膛进行一次全面吹灰，500MW以前，对锅炉烟道进行一次全面吹灰，尤其是尾部受热面。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":610,"type":"判断","question":"#5炉再热蒸汽温度616以上、#6炉630℃一年累计不得超过80小时，每次 运行时间不得超过30min（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":611,"type":"单选","question":"#5、#6锅炉压缩空气露点正常范围（）℃。","options":{"A":"<-50","B":"<-48","C":"<-68","D":"<-58"},"answer":"D"},{"num":612,"type":"多选","question":"下列属于等离子点火启动前准备工作的是（）。","options":{"A":"启动一台等离子冷却水泵，检查冷却水压力正常，另一台备用","B":"确认等离子火检冷却风系统运行正常","C":"检查等离子点火装置电源及控制系统无异常，开启等离子配电室空调冷却系统","D":"检查辅汽系统已经投运正常，磨煤机"},"answer":"A|B|C|D|"},{"num":613,"type":"判断","question":"锅炉点火后，不应开启顶棚出口集箱及包墙出口集箱疏水门进行短时疏 水，确保该处无积水。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":614,"type":"多选","question":"炉膛一次吹扫条件有（）。","options":{"A":"一次风机均停","B":"任一引风机运行且进出口挡板全开","C":"所有油枪油角阀全关","D":"燃烧器层二次风挡板在吹扫位置（大于55%）。E、 E.所有给煤机停运"},"answer":"A|B|C|"},{"num":615,"type":"单选","question":"空压机排气温度（）及其它自带的热工保护，空压机自动停运。","options":{"A":"≥109℃","B":"≥119℃","C":"≥129℃","D":"≥99℃"},"answer":"A"},{"num":616,"type":"判断","question":"冷、热一次风母管压力应维持10～12kPa（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":617,"type":"单选","question":"疏水扩容器工作压力为（）MP","options":{"A":"0.1120","B":"0.1167","C":"0.2211","D":"0.1577"},"answer":"B"},{"num":618,"type":"单选","question":"炉膛出口烟气温度大于（），炉膛烟温探针联锁保护报警。","options":{"A":"510 ℃","B":"520 ℃","C":"540 ℃","D":"580 ℃"},"answer":"C"},{"num":619,"type":"多选","question":"下列属于燃油泄漏试验条件的是（）。","options":{"A":"锅炉总风量>30%","B":"锅炉进油跳闸阀前油压满足（>3.0MP","C":"锅炉进油跳闸阀关闭","D":"所有油枪油角阀关闭。 E、 E.锅炉回油快关阀关闭"},"answer":"A|B|C|D|"},{"num":620,"type":"单选","question":"#6炉省煤器实际工作压力（）MPa。","options":{"A":"36.6","B":"34.3","C":"31.76","D":"33.4"},"answer":"D"},{"num":621,"type":"单选","question":"#6锅炉SCR装置进口烟气温度正常范围（）℃。","options":{"A":"310~420","B":"320~430","C":"325~420","D":"335~440"},"answer":"C"},{"num":622,"type":"单选","question":"转动设备轴承振动在转动设备规程没有明确规定的情况下，转速3000r/mi n时振动允许双幅值（）mm。","options":{"A":"0.085","B":"0.05","C":"0.10","D":"0.12"},"answer":"B"},{"num":623,"type":"多选","question":"锅炉燃烧调整的目的有哪些（）。","options":{"A":"维持锅炉各运行参数在正常范围，保证锅炉运行的经济性和安全性","B":"在锅炉稳定运行和负荷变动的时候，保证锅炉燃烧的稳定性","C":"使炉膛热负荷分配均匀，减少各级受热面的热偏差","D":"根据省煤器出口烟气含氧量与设计值的偏差调整二次风量,维持过剩空气系数在最 佳值。 E、 E.合理调整燃烬风配风，尽量减少NOx 排放量"},"answer":"A|B|C|D|"},{"num":624,"type":"单选","question":"#6炉引风机及电机润滑油流量约（）l/min、小于（）l/min报警。","options":{"A":"10,6","B":"20,10","C":"","D":"15,10"},"answer":"C"},{"num":625,"type":"单选","question":"#5锅炉主蒸汽压力（）时，电磁泄压阀动作。","options":{"A":"≥28.9MP","B":"28.0MP","C":"27.9MP","D":"30.0MP"},"answer":"A"},{"num":626,"type":"多选","question":"火灾原因有（）。","options":{"A":"汽机油系统、燃油系统、辅机油系统等泄漏","B":"制粉系统爆炸或自燃","C":"变压器或互感器故障","D":"氢系统泄漏。 E、 E.电气设备短路"},"answer":"A|B|C|D|"},{"num":627,"type":"单选","question":"等离子点火装置冷却水进回水差压高报警值（）MPa。","options":{"A":"≥0.6","B":"≥0.7","C":"≥0.8","D":"≥0.5"},"answer":"C"},{"num":628,"type":"判断","question":"一般情况下开机加负荷时A、D磨煤机运行，总煤量130T/H以上可以启动 第3台磨煤机（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":629,"type":"多选","question":"在机组负荷1000MW减至500MW过程中，应严密监视（）","options":{"A":"确认锅炉燃烧工况、炉膛压力稳定、分离器入口过热度、中间点温度及各受热管壁 温度正常，必要时手动干预","B":"停磨次序按照从上到下原则，最后停带等离子点火器的","C":"通知脱硫值班人员严密监视FG","D":"根据汽缸金属温度控制要求，控制主蒸汽、再热蒸汽温度，同时严密监视控制高压 、 缸金属温度、中压缸进口金属温度下降率，转子温度裕度，轴向位移参数变化趋势。E、 E."},"answer":"A|B|C|D"},{"num":630,"type":"单选","question":"炉膛出口烟气温度大于（），炉膛烟温探针联锁保护自动退出。","options":{"A":"510 ℃","B":"520 ℃","C":"540 ℃","D":"580 ℃"},"answer":"D"},{"num":631,"type":"单选","question":"磨煤机电机轴承温度高（），磨煤机跳闸。","options":{"A":"＞70℃","B":"＞80℃","C":"＞90℃","D":"＞100℃"},"answer":"C"},{"num":632,"type":"判断","question":"制粉系统运行时，密封风与一次风差压正常范围≤1.5kPa。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":633,"type":"单选","question":"定期检查传动装置的运行情况，减速器润滑油箱油位指示正常，温升小 于（）℃。","options":{"A":"70","B":"65","C":"60","D":"55"},"answer":"C"},{"num":634,"type":"单选","question":"#6锅炉磨煤机差压正常范围（）Pa。","options":{"A":"<5570","B":"<5670","C":"<5770","D":"<5870"},"answer":"D"},{"num":635,"type":"单选","question":"磨煤机润滑油系统正常：润滑油油压（）且任一高速油泵运行时，磨煤 机允许启动。","options":{"A":"＞0.10MP","B":"＞0.11MP","C":"＞0.13MP","D":"＞0.12MP"},"answer":"C"},{"num":636,"type":"多选","question":"引风机或电机轴承温度高原因有（）。","options":{"A":"润滑油供油不正常、流量偏小、压力偏低","B":"油系统冷却水压力低、水量偏小使进油温度高","C":"轴承损坏或轴承振动大","D":"冷却风机停运或故障。 E、 E.风机过负荷"},"answer":"A|B|C|D|"},{"num":637,"type":"单选","question":"等离子发生器电流正常范围（）A，最佳值（）A。","options":{"A":"180~300，230","B":"180~280，250","C":"180~208，230","D":"180~300，250"},"answer":"C"},{"num":638,"type":"单选","question":"#5、#6锅炉BCP电机腔室温度正常范围（）℃。","options":{"A":"55","B":"＜60","C":"50","D":"65"},"answer":"B"},{"num":639,"type":"单选","question":"#5、#6锅炉炉膛压力低限（）kPa","options":{"A":"-1","B":"-2.5","C":"-3","D":"-2.0"},"answer":"D"},{"num":640,"type":"单选","question":"燃油泄漏试验中，充油结束后300s内，若进油跳闸阀后的压力变化（） ，则锅炉回油快关阀及油角阀泄漏试验通过。","options":{"A":"≤0.3Mp","B":"≤0.2Mp","C":"≤0.4Mp","D":"≤0.1Mp"},"answer":"A"},{"num":641,"type":"判断","question":"接到机组启动操作票，应立即通知各岗位做好启动前的准备工作。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":642,"type":"判断","question":"油枪工作压力为2.8MPa（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"A"},{"num":643,"type":"单选","question":"机组负荷大于（），锅炉启动贮水罐至过热器减温水电动隔离总阀。","options":{"A":"250MW","B":"400MW","C":"350MW","D":"450MW"},"answer":"C"},{"num":644,"type":"单选","question":"锅炉冷态启动点火初期不应过早投入煤粉，一定要将热一次风温加热到 （ ）以后才能启动磨煤机运行。","options":{"A":"150℃","B":"160℃","C":"180℃","D":"170℃"},"answer":"B"},{"num":645,"type":"单选","question":"锅炉上水时间：夏季不少于（）小时，冬季不少于（）小时。","options":{"A":"2，2","B":"2，4","C":"4，2","D":"4，4"},"answer":"B"},{"num":646,"type":"单选","question":"#5、#6锅炉空预器进口烟温高限（B-MCR工况）（）℃。","options":{"A":"360","B":"369","C":"363","D":"366"},"answer":"B"},{"num":647,"type":"单选","question":"#6锅炉再热汽压力高限（）Mp","options":{"A":"5.75","B":"5.65","C":"5.95","D":"5.85"},"answer":"D"},{"num":648,"type":"单选","question":"#5炉水压试验省煤器系统锅炉水容积（）","options":{"A":"265m3","B":"270m3","C":"276m3","D":"286m3"},"answer":"C"},{"num":649,"type":"单选","question":"低温省煤器运行时，六个通道模块出口水温之间的最大温差（）℃。","options":{"A":"＜7","B":"＜5","C":"＜3","D":"＜9"},"answer":"B"},{"num":650,"type":"单选","question":"#5、#6锅炉磨煤机一次风量正常范围（）t/h。","options":{"A":"115.5","B":"127.4","C":"105.5","D":"135.7"},"answer":"B"},{"num":651,"type":"单选","question":"运行中空压机进气真空（）bar。","options":{"A":"不大于0.15","B":"不大于0.15","C":"不大于0.05","D":"不大于0.03"},"answer":"C"},{"num":652,"type":"单选","question":"火检冷却风压正常（），锅炉许可点油枪。","options":{"A":">8.0kP","B":">7.0kP","C":">6.0kP","D":">5.0kP"},"answer":"B"},{"num":653,"type":"单选","question":"#5锅炉省煤器进口给水压力高限（B-MCR工况）（）MPa。","options":{"A":"30.30","B":"32.19","C":"33.80","D":"31.76"},"answer":"D"},{"num":654,"type":"多选","question":"下列属于机组运行调整的主要任务和目的的是（）。","options":{"A":"机组运行中及时分析运行工况，严格监视汽轮机参数在运行范围内，各监视段压力 与负荷关系正常","B":"正常运行中，增、减负荷的速率应满足变负荷率规定","C":"控制机组运行参数符合规定，加强机组设备、 系统运行工况监视，合理调整、控制污染物生成及排放，符合环保标准。维持机组 安全、稳定、经济运行","D":"按照运行管理制度的规定，定时记录机组有关运行参数；定期进行设备的检查和维护 ；定期进行有关设备的切换和试验。加强机组运行状态参数的监视与分析，及时发现异 常并进行处理。 E、 E.妥善保管好岗位上的工具、器材、报表、资料，并做好交接班工作，不得遗失"},"answer":"A|B|C|D|"},{"num":655,"type":"单选","question":"密封风机轴承温度高报警值（）℃。","options":{"A":"≥80","B":"≥85","C":"≥75","D":"≥70"},"answer":"A"},{"num":656,"type":"单选","question":"#5、#6锅炉SCR装置进出口差压高限（）Pa。","options":{"A":">800","B":">700","C":">600","D":">500"},"answer":"A"},{"num":657,"type":"单选","question":"#6锅炉省煤器进口给水压力高限（B-MCR工况）（）MPa。","options":{"A":"32.5","B":"31.8","C":"32.6","D":"33.4"},"answer":"D"},{"num":658,"type":"多选","question":"下列哪些项目（）需要由总工程师主持或指定分场主任、专职工程师和 值长参加下进行。","options":{"A":"机组大、 中、小修后首次启动","B":"机组甩负荷试验","C":"机组超速试验","D":"高压加热器保护系统试验。 E、 E.调节系统试验"},"answer":"A|B|C|D|"},{"num":659,"type":"单选","question":"引风机运行中电机电流禁止超过（）A。","options":{"A":"959","B":"969","C":"979","D":"989"},"answer":"C"},{"num":660,"type":"单选","question":"#6锅炉一次热风母管压力正常范围（）kPa。","options":{"A":"8","B":"10","C":"12","D":"13"},"answer":"B"},{"num":661,"type":"单选","question":"#6炉一次风机电机功率为（）kw。","options":{"A":"2500","B":"2600","C":"2850","D":"2700"},"answer":"C"},{"num":662,"type":"单选","question":"制粉系统运行时，液压油压力低报警值（）MPa。","options":{"A":"≤3.5","B":"≤3.0","C":"≤2.0","D":"≤2.5"},"answer":"C"},{"num":663,"type":"单选","question":"#6炉引风机及电机润滑油压小于（）Mpa时报警。","options":{"A":"0.3","B":"0.15","C":"0.1","D":"0.2"},"answer":"D"},{"num":664,"type":"单选","question":"#6炉引风机及电机润滑油压正常在（）MPa左右。","options":{"A":"0.15","B":"0.3","C":"0.2","D":"0.1"},"answer":"B"},{"num":665,"type":"单选","question":"#6锅炉磨煤机差压高限（）Pa。","options":{"A":"6500","B":"6350","C":"6600","D":"6800"},"answer":"B"},{"num":666,"type":"单选","question":"#6锅炉再热汽温度低限（）℃。","options":{"A":"603","B":"605","C":"600","D":"608"},"answer":"A"},{"num":667,"type":"单选","question":"密封风机轴承温度正常范围（）℃。","options":{"A":"＜55","B":"＜60","C":"＜65","D":"＜70"},"answer":"D"},{"num":668,"type":"单选","question":"制粉系统运行时，磨煤机出口一次风速正常范围（）m/s。","options":{"A":"15~24","B":"18~24","C":"18~30","D":"15~30"},"answer":"B"},{"num":669,"type":"单选","question":"锅炉启动循环泵马达腔温度正常（），锅炉允许启动循环泵。","options":{"A":"<40℃","B":"<70℃","C":"<50℃","D":"<60℃"},"answer":"C"},{"num":670,"type":"单选","question":"#5炉锅炉启动循环泵扬程为（）m。","options":{"A":"120.5","B":"118.5","C":"110.5","D":"118.5"},"answer":"D"},{"num":671,"type":"多选","question":"下列属于锅炉专业冬季防冻措施的是（）。","options":{"A":"送、引、一次风机油站油温温度15℃以下时，开启冷油器油侧旁路门，关闭冷油器进油 门，将冷油器退出运行，保持冷却水畅通。如果风机或电机轴承最高点升高超过60℃，可 适当开启冷油器进油门，保持轴承温度不超过60℃","B":"停炉后采用干式保养，分离器出口压力降至0.8MP","C":"停炉后，如不能保持炉水泵清洗水和冷却水的投入，应严格按规程进行炉循泵马达腔 室疏放水；同时马达腔室外应联系包裹电热毯，监视炉循泵马达腔温度不低于4℃","D":"磨煤机润滑油站冷却器水侧旁路门保持开启，磨煤机停运后关闭冷却器进水门（回 水门保持开启），磨煤机启动后根据油温适当开启冷却水进水门。 E、 E.工业水系统维持运行，班中应经常检查各冷却水用户回水畅通，保持流水防冻。机 组停运后磨煤机油站冷却水门都应开启"},"answer":"A|B|C|D|"},{"num":672,"type":"单选","question":"严格控制炉膛出口烟温，在再热器无蒸汽流通时应严格控制炉膛出口烟 温（）。","options":{"A":"小于570℃","B":"小于560℃","C":"小于550℃","D":"小于540℃"},"answer":"D"},{"num":673,"type":"单选","question":"电机润滑油流量不低（），一次风机启动许可。","options":{"A":">10 l/min","B":">8 l/min","C":">6 l/min","D":">5 l/min"},"answer":"C"},{"num":674,"type":"单选","question":"#6锅炉省煤器进口给水流量<（）延时3sMFT。","options":{"A":"510t/h","B":"310t/h","C":"380t/h","D":"390t/h"},"answer":"C"},{"num":675,"type":"判断","question":"#6 锅炉再热汽温度正常值628℃。( )（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":676,"type":"单选","question":"启动循环泵马达腔温度（）℃时，循环泵保护动作跳闸。","options":{"A":"大于75","B":"大于70","C":"大于65","D":"大于60"},"answer":"C"},{"num":677,"type":"单选","question":"工业水系统电机功率为（）kw。","options":{"A":"120","B":"130","C":"140","D":"110"},"answer":"D"},{"num":678,"type":"多选","question":"制粉系统运行注意事项有（）。","options":{"A":"磨煤机运行中加强风量调整和对一次风管风速的监视，防止一次风管堵塞。热风调 整门开度最小25%，如果这时风量过大，可切手动调整","B":"磨煤机运行时应控制磨煤机出口温度在规定范围内，磨煤机出口温度升高至跳闸时 磨煤机应跳闸，原因未查明清且温度未降低前禁止启动","C":"磨煤机暖磨过程中，严格控制暖磨速度，发现温度异常升高应立即停止暖磨，投入 消防蒸汽并查明原因后才能重新暖磨","D":"巡检时必须对备用磨煤机、给煤机、原煤仓进行检查，检测设备外壳温度的变化情 况，发现异常及时处理。 E、 E.磨煤机运行中跳闸，应严密监视跳闸磨出口温度正常，待磨煤机故障消除后及时启 动运行，磨煤机充分抽粉后再启动给煤机"},"answer":"A|B|C|D|"},{"num":679,"type":"单选","question":"启动循环泵马达腔温度高限（）℃。","options":{"A":"≯70","B":"≯65","C":"≯60","D":"≯55"},"answer":"B"},{"num":680,"type":"单选","question":"#5锅炉低温再热器出口壁温高限为（）℃。","options":{"A":"600","B":"585","C":"590","D":"596"},"answer":"D"},{"num":681,"type":"单选","question":"#6炉引风机液压油压力正常值在（）Mpa左右。","options":{"A":"4.0","B":"3.0","C":"0.35","D":"0.25"},"answer":"B"},{"num":682,"type":"多选","question":"锅炉启动的基本要求有（）。","options":{"A":"燃煤、燃油、除盐水储备充足，质量合格，凝结水精处理系统可投用","B":"各部位消防设施齐全，消防系统处于备用状态，可以随时投用","C":"检修或消缺处理后的锅炉，所有检修工作票已终结，临时设施已拆除，冷态验收合 格","D":"所有设备动力电源和控制电源完好。 E、 E.集控及就地监控仪表齐全，校验合格"},"answer":"A|B|C|D|"},{"num":683,"type":"判断","question":"主蒸汽温度达616℃以上一年累计不得超过80小时，每次运行时间不得超 过30min。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":684,"type":"多选","question":"火检冷却风机启动前的检查有（）。","options":{"A":"检查火检系统各个仪表投入正常，测两台火检冷却风机电机绝缘合格，电已送","B":"检查火检冷却风机出口三通挡板位置正确，开启风机出口母管上的手动闸板","C":"检查火检冷却风机入口滤网清洁无杂物","D":"检查所有火检探头冷却风手动门开启。E、 E.检查火检冷却风机就地控制柜的切换开关位置正确"},"answer":"A|B|C|D|"},{"num":685,"type":"单选","question":"#5炉水压试验过热器系统（含包墙）锅炉水容积（）","options":{"A":"270m3","B":"268m3","C":"278m3","D":"288m3"},"answer":"C"},{"num":686,"type":"单选","question":"等离子点火装置一级载体风压力正常值（）kPa。","options":{"A":"80","B":"180","C":"150","D":"120"},"answer":"D"},{"num":687,"type":"单选","question":"#5、#6炉引风机轴承温度应（）℃。","options":{"A":"＜65","B":"＜70","C":"＜80","D":"＜85"},"answer":"B"},{"num":688,"type":"单选","question":"#6炉引风机电机轴承温度（）℃时报警。","options":{"A":"≥75","B":"≥70","C":"≥65","D":"≥60"},"answer":"B"},{"num":689,"type":"单选","question":"空压机电机功率为（）kw。","options":{"A":"330","B":"320","C":"350","D":"360"},"answer":"C"},{"num":690,"type":"单选","question":"5、#6锅炉BCP电机腔室温度跳闸值为（）℃。","options":{"A":"≥75","B":"≥55","C":"≥60","D":"≥65"},"answer":"D"},{"num":691,"type":"单选","question":"当冷凝水箱水位#5炉（）mm、#6炉（）mm时，选为“辅泵”方式的疏水 泵自启动；（）mm时会自停。","options":{"A":"＞1300，＞2500，≤1300","B":"＞1300，＞2500，≤700","C":"＞2300，＞3000，≤1300","D":"＞2300，＞3000，≤700"},"answer":"C"},{"num":692,"type":"单选","question":"#5、#6锅炉磨煤机出口温度低限（）℃。","options":{"A":"55","B":"65","C":"75","D":"60"},"answer":"D"},{"num":693,"type":"单选","question":"#5炉一次汽水系统工作压力水压试验（）","options":{"A":"28.46MP","B":"27.46MP","C":"28.3MP","D":"28.9MP"},"answer":"B"},{"num":694,"type":"单选","question":"锅炉MFT联锁保护：炉膛压力低低（），延时3s。","options":{"A":"≤-3.5kP","B":"≤-1.0kP","C":"≤-3.0kP","D":"≤-4.0kP"},"answer":"C"},{"num":695,"type":"单选","question":"锅炉停用时间超过（），一般应进行锅炉清洗。","options":{"A":"160小时","B":"150小时","C":"170小时","D":"190小时"},"answer":"B"},{"num":696,"type":"单选","question":"#5炉引风机电机轴承温度（）℃时报警。","options":{"A":"≥80","B":"≥70","C":"≥85","D":"≥75"},"answer":"D"},{"num":697,"type":"单选","question":"热态和极热态启动时，500 MW以上时可以加大到（）。","options":{"A":"15 MW/min","B":"20MW/min","C":"10 MW/min","D":"5 MW/min"},"answer":"B"},{"num":698,"type":"单选","question":"吹扫压缩空气压力为（）MPa。","options":{"A":"0.3~0.5","B":"0.6～0.8","C":"0.7~0.85","D":"0.6~0.7"},"answer":"B"},{"num":699,"type":"单选","question":"炉膛风量（），锅炉许可点油枪。","options":{"A":">35%","B":">30%","C":">25%","D":">20%"},"answer":"C"},{"num":700,"type":"单选","question":"引风机电机功率为（）kw。","options":{"A":"8000","B":"8600","C":"8300","D":"8500"},"answer":"B"},{"num":701,"type":"单选","question":"空压机排气温度保护值（）℃。","options":{"A":"≥112","B":"≥109","C":"≥106","D":"≥103"},"answer":"B"},{"num":702,"type":"单选","question":"#6锅炉省煤器进口给水温度高限（B-MCR工况）（）℃。","options":{"A":"300","B":"299","C":"303","D":"296"},"answer":"C"},{"num":703,"type":"单选","question":"#5、#6锅炉贮水罐水位高限（）m","options":{"A":"20.5","B":"19.5","C":"18.5","D":"21.5"},"answer":"D"},{"num":704,"type":"单选","question":"#5、#6锅炉火检冷却风压力正常范围（）kPa。","options":{"A":">6","B":">7","C":">5","D":">8"},"answer":"B"},{"num":705,"type":"单选","question":"等离子点火装置一次风风速正常范围（）m/s。","options":{"A":"18~22","B":"18~26","C":"12~26","D":"12~22"},"answer":"B"},{"num":706,"type":"单选","question":"当空预器导向轴承润滑油系统的油温低于（）℃时备用油泵停止。","options":{"A":"60","B":"55","C":"50","D":"45"},"answer":"C"},{"num":707,"type":"单选","question":"#5、#6机负荷（），贮水罐水位（）且360阀全关，跳BCP泵。","options":{"A":">250MW，<5m","B":">210MW，<5m","C":">210MW，<3m","D":">270MW，<3m"},"answer":"B"},{"num":708,"type":"单选","question":"#6密封风机电机电流正常值（）A。","options":{"A":"＜319","B":"＜329","C":"＜339","D":"＜349"},"answer":"B"},{"num":709,"type":"单选","question":"#6炉水压试验再热器系统锅炉水容积（）","options":{"A":"528.5m3","B":"518.7m3","C":"538.7m3","D":"548.7m3"},"answer":"B"},{"num":710,"type":"多选","question":"低负荷运行时锅炉燃烧注意事项有（）。","options":{"A":"为保证锅炉燃烧安全，当机组出力小于400MW时，优先维持磨煤机","B":"机组出力小于400MW时，三台磨运行，其中保证二台磨的出力应大于50t/h","C":"机组出力小于300MW时，优先考虑维持最下层二台磨运行，并投入相应层的等离子装 、置助燃，尽量减少低负荷时投油枪稳燃。当有等离子或油枪投入运行时，应加强对空预 器和","D":"机组低负荷时锅炉燃烧强度变弱，炉膛温度较低，抗扰动能力下降。应加强对原煤 仓料位及给煤机运行的监视，防止出现磨煤机断煤的现象。 E、 E.机组低负荷运行时要注意炉膛燃烧的稳定性，并合理安排磨煤机的投运方式，尽量 避免启、停磨煤机的操作"},"answer":"A|B|C|D|"},{"num":711,"type":"单选","question":"#5、#6锅炉点火油压力高限为（）MPa。","options":{"A":"3.0","B":"4.5","C":"3.5","D":"4.0"},"answer":"D"},{"num":712,"type":"单选","question":"一次风机轴承温度达到（）℃，延时5s风机跳闸。","options":{"A":"70","B":"90","C":"80","D":"100"},"answer":"B"},{"num":713,"type":"单选","question":"#6锅炉再热汽温度正常范围（）℃。","options":{"A":"628","B":"623","C":"626","D":"630"},"answer":"B"},{"num":714,"type":"判断","question":"锅炉湿、干态转换点在25%B-MCR到30%BMCR负荷之间，既不是一个精确的负荷点，也不是一个稳定的点，因此 允许机组在此负荷期间长时间运行。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":715,"type":"单选","question":"磨煤机电机功率为（）kw。","options":{"A":"1100","B":"1200","C":"1000","D":"1300"},"answer":"C"},{"num":716,"type":"单选","question":"制粉系统运行时，动态分离器减速箱油温高报警值（）℃。","options":{"A":"≥65","B":"≥60","C":"≥55","D":"≥50"},"answer":"B"},{"num":717,"type":"单选","question":"空预器运行中辅电机电流#5炉低高限（）A，#6炉高限（）A。","options":{"A":"25,30","B":"30,25","C":"45,94","D":"94,45"},"answer":"C"},{"num":718,"type":"判断","question":"正常情况下或做动平衡试验时，200kW～500kW的电动机每次启动的间隔 时间不小于0.5小时。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":719,"type":"单选","question":"SCR系统运行时，额定负荷下氨流量在（）kg/h","options":{"A":"210","B":"220","C":"230","D":"240"},"answer":"C"},{"num":720,"type":"单选","question":"当空预器导向轴承润滑油系统的油温低于（）℃，主油泵停运。","options":{"A":"50","B":"55","C":"60","D":"45"},"answer":"D"},{"num":721,"type":"单选","question":"#6炉二次风暖风器运行时，辅汽供汽时，汽源温度设定（）℃。","options":{"A":"295～350","B":"235～310","C":"295～310","D":"235～350"},"answer":"C"},{"num":722,"type":"单选","question":"磨煤机磨辊轴承油温（）时，磨煤机允许启动。","options":{"A":"＜80℃","B":"＜85℃","C":"＜90℃","D":"＜100℃"},"answer":"C"},{"num":723,"type":"单选","question":"送风机及电机润滑油滤网差压MPa。（）","options":{"A":"<0.8","B":"< 0. 5","C":"< 0. 1","D":"< 0. 2"},"answer":"B"},{"num":724,"type":"单选","question":"等离子点火启动中，当任何一个燃烧器超过（）未点燃应立即停止磨煤 机。","options":{"A":"180s","B":"170s","C":"160s","D":"150s"},"answer":"A"},{"num":725,"type":"单选","question":"#6炉二次风暖风器运行时，辅汽供汽时，汽源压力设定（）MPa，","options":{"A":"0.35～0.56","B":"0.21～0.56","C":"0.21～0.65","D":"0.35～0.65"},"answer":"B"},{"num":726,"type":"单选","question":"#6炉水压试验过热器系统（含包墙）锅炉水容积（）","options":{"A":"270m3","B":"268m3","C":"278m3","D":"288m3"},"answer":"C"},{"num":727,"type":"判断","question":"正常运行时，在保证磨煤机运行要求的前提下，尽量以使一次风机的工 作点靠近其喘振区域，增强一次风机的抗扰动能力。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":728,"type":"单选","question":"一次风机液压油油压正常（）且润滑油压力不低（），一次风机启动许 可。","options":{"A":">3.0MP","B":">2.5MP","C":">2.5MP","D":">3.0MP"},"answer":"B"},{"num":729,"type":"单选","question":"运行中油气分离器出口的空气温度T2不超过（）℃。","options":{"A":"103","B":"106","C":"109","D":"112"},"answer":"B"},{"num":730,"type":"单选","question":"#5锅炉主蒸汽压力正常范围（）Mp","options":{"A":"≤25.46","B":"≤26.46","C":"≤27.46","D":"≤28.46"},"answer":"C"},{"num":731,"type":"单选","question":"机组负荷大于（），锅炉启动系统暖管总管电动隔离阀。","options":{"A":"250MW","B":"400MW","C":"350MW","D":"450MW"},"answer":"C"},{"num":732,"type":"单选","question":"等离子点火装置一级载体风压力低报警值（）kPa。","options":{"A":"≤120","B":"≤90","C":"≤60","D":"≤30"},"answer":"C"},{"num":733,"type":"单选","question":"#6炉水压试验省煤器系统锅炉水容积（）","options":{"A":"260m3","B":"280m3","C":"270m3","D":"290m3"},"answer":"B"},{"num":734,"type":"单选","question":"磨煤机磨辊轴承油温（），延时3s，磨煤机跳闸。","options":{"A":"＞110℃","B":"＞90℃","C":"＞95℃","D":"＞100℃"},"answer":"D"},{"num":735,"type":"单选","question":"短吹温度设定值（）℃、压力设定值（）MPa","options":{"A":"365,3.2","B":"290,3.8","C":"365,2.5","D":"290,2.5"},"answer":"C"},{"num":736,"type":"单选","question":"锅炉各路吹灰疏水温度大于（），吹灰系统暖管完成。","options":{"A":"250℃","B":"230℃","C":"240℃","D":"260℃"},"answer":"B"},{"num":737,"type":"判断","question":"压缩空气系统正常运行时工业冷却水进水压力维持在0.60～0.80MPa左右 。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":738,"type":"多选","question":"低温省煤器的运行维护有（）。","options":{"A":"","B":"低温省煤器烟气侧阻力≤400P","C":"低温省煤器六个通道模块出口烟温平均值保证在90±1℃","D":"低温省煤器单通道模块出口水温之间的温差＜5℃。 E、 E.声波吹灰器应投入连续运行，并且保证吹灰气源压力≥0.4MP"},"answer":"A|B|C|"},{"num":739,"type":"单选","question":"火检冷却风机进口滤网压差正常（）Kpa。","options":{"A":"＜4.0","B":"＜5.0","C":"＜2.0","D":"＜6.0"},"answer":"C"},{"num":740,"type":"单选","question":"给煤机电机额定电压为（）V。","options":{"A":"381","B":"380","C":"385","D":"386"},"answer":"B"},{"num":741,"type":"单选","question":"温态启动时，最初负荷变化率为（）。","options":{"A":"20 MW/min","B":"15 MW/min","C":"10MW/min","D":"5 MW/min"},"answer":"D"},{"num":742,"type":"判断","question":"当两台火检风机均跳闸或冷却风母管压力小于5Kpa、延时60S后，锅炉MF T动作。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":743,"type":"单选","question":"送风机及电机润滑油流量约（）l/min、小于（）l/min报警。","options":{"A":"15,3","B":"10,3","C":"15,6","D":"10,6"},"answer":"D"},{"num":744,"type":"单选","question":"导向轴承和支承轴承油温超过（）℃时应停止空预器运行。","options":{"A":"70","B":"85","C":"55","D":"60"},"answer":"B"},{"num":745,"type":"单选","question":"等离子点火装置冷却水进回水差压低报警值（）MPa。","options":{"A":"≤0.1","B":"≤0.2","C":"≤0.3","D":"≤0.4"},"answer":"D"},{"num":746,"type":"单选","question":"一次风机电机线圈温度应（）℃。","options":{"A":"＜70","B":"＜80","C":"＜110","D":"＜90"},"answer":"C"},{"num":747,"type":"单选","question":"当#1- 3空压机在备用时，仪用气母管压力低至（），延时2s，空压机自启动。","options":{"A":"0.30Mp","B":"0.40Mp","C":"0.60MP","D":"0.70Mp"},"answer":"C"},{"num":748,"type":"判断","question":"干排渣系统发生故障关断门无法关闭，申请降负荷300MW。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":749,"type":"单选","question":"#5锅炉高温过热器出口壁温高限为（）℃。","options":{"A":"617","B":"620","C":"627","D":"625"},"answer":"C"},{"num":750,"type":"单选","question":"#5锅炉一次热风母管压力低限（）kPa。","options":{"A":"7.5","B":"9.5","C":"8.5","D":"10.5"},"answer":"C"},{"num":751,"type":"单选","question":"制粉系统运行时，动态分离器减速箱油温正常范围（）℃。","options":{"A":"＜60","B":"＜65","C":"＜55","D":"＜50"},"answer":"A"},{"num":752,"type":"单选","question":"#6炉引风机轴承温度（）℃时，延时5s风机跳闸。","options":{"A":"70","B":"80","C":"90","D":"110"},"answer":"C"},{"num":753,"type":"判断","question":"炉膛出口烟温＜45℃时允许停止火检冷却风机运行。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":754,"type":"单选","question":"杂用气母管压力正常值（）MPa。","options":{"A":"0.6~0.7","B":"0.7~0.8","C":"0.5~0.8","D":"0.5~0.7"},"answer":"B"},{"num":755,"type":"单选","question":"一次风机运行中电机电流禁止超过：#5炉（）A，#6炉（）A。","options":{"A":"332，326","B":"322，326","C":"332，336","D":"322，336"},"answer":"A"},{"num":756,"type":"单选","question":"当运行火检冷却风机跳闸或母管压力（）kPa时，备用火检冷却风机应联 动。","options":{"A":"低于2","B":"低于4","C":"低于5","D":"低于6"},"answer":"C"},{"num":757,"type":"单选","question":"制粉系统运行时，磨辊油温正常范围（）℃。","options":{"A":"≤80","B":"≤85","C":"≤90","D":"≤95"},"answer":"C"},{"num":758,"type":"单选","question":"#5锅炉省煤器进口给水流量<（）延时3sMFT。","options":{"A":"350t/h","B":"400t/h","C":"380t/h","D":"390t/h"},"answer":"C"},{"num":759,"type":"判断","question":"正常燃用设计煤种时控制磨煤机出口温度在100℃以内，超过107℃时停止 磨煤机运行，并进行隔离。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":760,"type":"单选","question":"#5、#6锅炉密封风机出口母管压力正常范围（）kP","options":{"A":"15-18","B":"12-16","C":"14-20","D":"16-21"},"answer":"C"},{"num":761,"type":"单选","question":"锅炉正常运行中，当疏水含铁量()μg/L可回收到凝汽器.","options":{"A":"<500","B":"<100","C":"<200","D":"<300"},"answer":"B"},{"num":762,"type":"单选","question":"#5锅炉省煤器进口给水流量高限（B-MCR工况）（）t/h。","options":{"A":"2981.3","B":"2991.3","C":"3000.3","D":"2950.3"},"answer":"B"},{"num":763,"type":"单选","question":"等离子点火启动中，等离子点火装置拉弧后，应能够尽快的投入磨煤机A （或D）的一次风，间隔时间控制在（）左右，不得超过（）。","options":{"A":"10min，15min","B":"10min，10min","C":"5min，5min","D":"5min，10min"},"answer":"D"},{"num":764,"type":"单选","question":"#5、#6锅炉SCR装置进出口差压正常范围（）Pa。","options":{"A":"<600","B":"<500","C":"<800","D":"<400"},"answer":"B"},{"num":765,"type":"单选","question":"送风机电机线圈温度（）℃时报警。","options":{"A":"≥115","B":"≥110","C":"≥105","D":"≥100"},"answer":"B"},{"num":766,"type":"单选","question":"#5、#6锅炉风箱与炉膛差压正常范围（）kPa。","options":{"A":"1.5","B":"1.2","C":"1.6","D":"1.8"},"answer":"B"},{"num":767,"type":"判断","question":"炉膛出口烟温＜50℃时允许停止等离子火检冷却风机运行。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":768,"type":"单选","question":"一次风机及电机润滑油压在（）MPa左右。","options":{"A":"0.2","B":"0.3","C":"0.25","D":"0.15"},"answer":"B"},{"num":769,"type":"单选","question":"当送风机电机轴承温度达到（）℃，延时5s风机跳闸。","options":{"A":"70","B":"90","C":"110","D":"80"},"answer":"D"},{"num":770,"type":"单选","question":"升负荷过程中当减温水系统投入运行时，应监视减温器后的蒸汽过热度 ，防止减温器后蒸汽带水。（）","options":{"A":"大于10℃","B":"大于15℃","C":"大于25℃","D":"大于35℃"},"answer":"B"},{"num":771,"type":"单选","question":"送风机液压油压力在（）Mpa时报警且闭锁动叶操作，联启备用油泵","options":{"A":"小于1.5","B":"小于1.2","C":"小于1.0","D":"小于0.8"},"answer":"D"},{"num":772,"type":"多选","question":"碎渣机跳闸条件有（）。","options":{"A":"二级钢带运行信号消失","B":"碎渣机失速延时10s","C":"渣仓入口关断门关闭","D":"渣仓料位高高"},"answer":"A|B|C|D"},{"num":773,"type":"单选","question":"#5炉引风机及电机润滑油压小于（）MPa时报警，联锁启动备用润滑油泵 。","options":{"A":"0.15","B":"0.12","C":"0.10","D":"0.05"},"answer":"B"},{"num":774,"type":"单选","question":"#6炉二次风暖风器运行时，疏水泵水位正常值（）mm。","options":{"A":"200～500","B":"400～500","C":"200～600","D":"400～600"},"answer":"D"},{"num":775,"type":"单选","question":"#5炉一次风机电机电流为（）A。","options":{"A":"332","B":"325","C":"342","D":"317"},"answer":"A"},{"num":776,"type":"单选","question":"当冷媒高压达（）MPa时，干燥机高压保护动作跳闸。","options":{"A":"2.3","B":"2.0","C":"1.8","D":"1.6"},"answer":"A"},{"num":777,"type":"单选","question":"送风机运行中动叶开度不宜大于（）%，达到（）%时闭锁增。","options":{"A":"80,95","B":"85,90","C":"90，95","D":"90,100"},"answer":"C"},{"num":778,"type":"单选","question":"启动循环泵马达腔温度正常范围（）℃。","options":{"A":"＜54","B":"＜56","C":"＜58","D":"＜60"},"answer":"D"},{"num":779,"type":"单选","question":"送风机电机电压为（）kv。","options":{"A":"6.2","B":"6.3","C":"6","D":"6.6"},"answer":"C"},{"num":780,"type":"单选","question":"干排渣系统运行时，二级排渣机出口渣温应控制在（）℃之间","options":{"A":"150—180","B":"100—180","C":"100—250","D":"150—250"},"answer":"B"},{"num":781,"type":"单选","question":"等离子冷却水泵任一运行且母管压力不低（），允许等离子点火。","options":{"A":">0.8MP","B":">0.7MP","C":">0.6MP","D":">0.5MP"},"answer":"C"},{"num":782,"type":"单选","question":"#6锅炉省煤器进口给水流量<（）延时20sMFT。","options":{"A":"550t/h","B":"580t/h","C":"530t/h","D":"510t/h"},"answer":"D"},{"num":783,"type":"单选","question":"#6炉引风机及电机润滑油压小于（）Mpa且流量低报警时风机跳闸。","options":{"A":"0.11","B":"0.1","C":"0.12","D":"0.13"},"answer":"B"},{"num":784,"type":"单选","question":"低温省煤器运行时，单通道模块出口水温之间的温差（）℃。","options":{"A":"＜7","B":"＜5","C":"＜3","D":"＜1"},"answer":"C"},{"num":785,"type":"单选","question":"锅炉热态启动点火前锅炉上水后，控制汽水分离器温降速度（）和水冷 壁出口各金属温度的偏差不超过（）。","options":{"A":"＜1.0℃/min，50℃","B":"＜2.0℃/min，40℃","C":"＜2.0℃/min，50℃","D":"＜1.0℃/min，40℃"},"answer":"C"},{"num":786,"type":"单选","question":"制粉系统运行时，液压油压力正常范围（）MPa。","options":{"A":"2~12","B":"5~12","C":"5~14","D":"2~14"},"answer":"C"},{"num":787,"type":"判断","question":"压缩空气系统投运时，根据用气量的需要选择#1- 3空压机中的一台投入运行供仪用气处理装置。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":788,"type":"单选","question":"#6炉二次风暖风器运行时，疏水泵额定电流（）A。","options":{"A":"","B":"98.46","C":"60","D":"85"},"answer":"B"},{"num":789,"type":"单选","question":"不论哪种启动方式，在250MW- 300MW负荷区间，干、湿态转换过程中维持锅炉给水流量约（）稳定。","options":{"A":"650-700t/h","B":"750-800t/h","C":"950-1000t/h","D":"850-900t/h"},"answer":"D"},{"num":790,"type":"单选","question":"#6炉锅炉启动循环泵电机额定功率为（）kw。","options":{"A":"500","B":"490","C":"510","D":"520"},"answer":"C"},{"num":791,"type":"多选","question":"下列属于燃烧火焰监视的是（）。","options":{"A":"燃烧稳定时，锅炉具有光亮金黄色火焰，火色稳定，燃烧损失小","B":"当负荷高时，由于燃烧强化，火色偏白一些，当负荷低时则偏黄一些","C":"如果火焰炽白刺眼，则表示风量偏大，这时炉膛的温度较高，很容易引起结渣","D":"锅炉燃烧的稳定性主要通过火检信号的强度，炉膛压力及烟气氧量的变化来判断。 E、 E.当煤的灰分高时，火焰可能闪动；煤的水分高或挥发分低时，火焰发黄。值班员应 根据实际情况进行适当的燃烧调节"},"answer":"A|B|C|D|"},{"num":792,"type":"单选","question":"#6炉二次风暖风器运行时，水位到低二值（）mm时，联锁跳闸运行泵。","options":{"A":"700","B":"400","C":"100","D":"0"},"answer":"D"},{"num":793,"type":"单选","question":"一次风机电机轴承温度不高（），一次风机启动许可。","options":{"A":"<65℃","B":"<75℃","C":"<70℃","D":"<80℃"},"answer":"C"},{"num":794,"type":"判断","question":"磨煤机推力瓦油温高＞100℃，延时3s时，磨煤机跳闸。（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":795,"type":"单选","question":"空压机排气温度高限值（）℃。","options":{"A":"≥115","B":"≥112","C":"≥109","D":"≥106"},"answer":"D"},{"num":796,"type":"单选","question":"#5炉水压试验再热器系统锅炉水容积（）","options":{"A":"528.5m3","B":"518.7m3","C":"538.7m3","D":"548.7m3"},"answer":"B"},{"num":797,"type":"单选","question":"暖风器运行中控制空预器冷端综合温度不低于℃。（）","options":{"A":"180","B":"170","C":"160","D":"150"},"answer":"D"},{"num":798,"type":"单选","question":"#5炉引风机液压油压力小于（）Mpa报警、延时15秒联启备用泵、延时30 秒闭锁动叶操作。","options":{"A":"0.8","B":"3.0","C":"3.5","D":"2.5"},"answer":"C"},{"num":799,"type":"单选","question":"#5、#6锅炉SCR装置进口烟气NOX 含量正常范围（）mg/Nm3。","options":{"A":"<400","B":"<500","C":"<200","D":"<300"},"answer":"D"},{"num":800,"type":"单选","question":"制粉系统运行时，磨煤机电机轴承温度正常范围（）℃。","options":{"A":"≤70","B":"≤75","C":"≤80","D":"≤85"},"answer":"C"},{"num":801,"type":"单选","question":"#5锅炉主蒸汽温度正常范围（）℃。","options":{"A":"600","B":"610","C":"613","D":"605"},"answer":"D"},{"num":802,"type":"单选","question":"制粉系统运行时，磨煤机电机轴承温度高报警值（）℃。","options":{"A":"≥70","B":"≥75","C":"≥80","D":"≥85"},"answer":"D"},{"num":803,"type":"单选","question":"送风机轴承温度应（）℃。","options":{"A":"≥80","B":"＜70","C":"≥70","D":"＜80"},"answer":"D"},{"num":804,"type":"单选","question":"锅炉启动循环泵马达腔需要注水时，必须对注水管路先进行冲洗，确认 注水水质合格，水温（）℃。","options":{"A":"低于47","B":"低于49","C":"低于45","D":"低于43"},"answer":"B"},{"num":805,"type":"判断","question":"超压试验压力一次汽水系统为省煤器进口设计压力的1.5倍（） A、 正确 B、 错误","options":{"A":"正确","B":"错误"},"answer":"B"},{"num":806,"type":"单选","question":"干排渣系统运行时，一、二级排渣机张紧压力一般为（）MPa左右。","options":{"A":"0.6","B":"0.35","C":"0.25","D":"0.5"},"answer":"B"},{"num":807,"type":"单选","question":"#5炉引风机及电机润滑油压正常在（）MPa左右。","options":{"A":"0.12","B":"0.05","C":"0.3","D":"0.15"},"answer":"D"},{"num":808,"type":"单选","question":"空预器运行中支撑轴承油温和导向轴承油温正常范围（）℃。","options":{"A":"55~70","B":"70~85","C":"45~85","D":"45~55"},"answer":"D"},{"num":809,"type":"单选","question":"空预器运行中导向轴承油滤网差压正常范围（）。","options":{"A":"＜0.12","B":"＜0.13","C":"＜0.14","D":"＜0.15"},"answer":"D"},{"num":810,"type":"单选","question":"干燥机正常运行时，吸附塔出口露点控制在℃。（）","options":{"A":"≤－30","B":"≤－35","C":"≤－40","D":"≤－45"},"answer":"C"},{"num":811,"type":"单选","question":"若锅炉疏水泵选为“辅泵”方式，冷凝水箱水位（）时联锁启动。","options":{"A":"≥1300mm","B":"≥1000mm","C":"≥300mm","D":"≥2300mm"},"answer":"D"},{"num":812,"type":"单选","question":"#5、#6锅炉压缩空气温度正常范围（）℃。","options":{"A":"30","B":"25","C":"40","D":"50"},"answer":"C"},{"num":813,"type":"单选","question":"送风机电机线圈温度达（）℃时应手动停止送风机运行。","options":{"A":"115","B":"120","C":"125","D":"130"},"answer":"D"},{"num":814,"type":"单选","question":"磨煤机润滑油分配器油压应（）MPa。","options":{"A":"≥0.15","B":"≥0.13","C":"≥0.12","D":"≥0.11"},"answer":"B"},{"num":815,"type":"单选","question":"#5、#6锅炉火检冷却风压力（）kPa时，备用风机自启。","options":{"A":"≤4kP","B":"≤3kP","C":"≤6kP","D":"≤5kP"},"answer":"D"},{"num":816,"type":"单选","question":"#5锅炉再热汽温度正常范围（）℃。","options":{"A":"608","B":"603","C":"600","D":"605"},"answer":"B"},{"num":817,"type":"单选","question":"空预器运行中主电机电流#5炉高限（）A，#6炉高限（）A。","options":{"A":"25,30","B":"30,25","C":"45,94","D":"94,45"},"answer":"C"},{"num":818,"type":"单选","question":"密封风母管压力正常范围（）kPa。","options":{"A":"12~18","B":"12~20","C":"14~18","D":"14~20"},"answer":"D"}]}.questions;
+  document.getElementById('loadingIndicator').style.display = 'none';
+  initApp();
+}
+
+// ============ Init ============
+function initApp() {
+  // Load saved progress
+  loadProgress();
+
+  currentQuestions = [...allQuestions];
+  currentIndex = 0;
+  updateStats();
+  renderQuestion();
+}
+
+// ============ Progress persistence ============
+function saveProgress() {
+  try {
+    const data = { answeredMap, wrongSet: [...wrongSet] };
+    localStorage.setItem('quiz_progress', JSON.stringify(data));
+  } catch(e) { /* ignore */ }
+}
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem('quiz_progress');
+    if (raw) {
+      const data = JSON.parse(raw);
+      answeredMap = data.answeredMap || {};
+      wrongSet = new Set(data.wrongSet || []);
+    }
+  } catch(e) { /* ignore */ }
+}
+
+function resetProgress() {
+  if (!confirm('确定要重置所有答题进度吗？')) return;
+  answeredMap = {};
+  wrongSet = new Set();
+  saveProgress();
+  updateStats();
+  renderQuestion();
+}
+
+// ============ Render ============
+function renderQuestion() {
+  const area = document.getElementById('questionArea');
+  const qs = currentMode === 'test' ? testQuestions : currentQuestions;
+
+  if (!qs || qs.length === 0) {
+    area.innerHTML = `<div class="no-questions">
+      ${currentMode === 'wrong' ? '🎉 没有错题！继续保持！' : '📭 当前没有符合条件的题目'}
+    </div>`;
+    document.querySelector('.nav-buttons').style.display = 'none';
+    return;
+  }
+
+  if (currentIndex >= qs.length) currentIndex = 0;
+  if (currentIndex < 0) currentIndex = qs.length - 1;
+
+  document.querySelector('.nav-buttons').style.display = 'flex';
+
+  const q = qs[currentIndex];
+  const idx = allQuestions.indexOf(q);
+  const isAnswered = idx in answeredMap;
+  const result = answeredMap[idx];
+  const isWrong = wrongSet.has(idx);
+
+  // Update progress bar
+  updateProgress();
+
+  // Build question HTML
+  const isMulti = q.type === '多选';
+  const typeClass = isMulti ? 'multi' : q.type === '单选' ? 'single' : 'judge';
+
+  let isMultiPending = false;
+  let statusText, statusClass;
+
+  if (isAnswered && result) {
+    if (result.revealed) {
+      statusText = '👁 已查看';
+      statusClass = 'pending';
+    } else {
+      statusText = result.correct ? '✅ 正确' : '❌ 错误';
+      statusClass = result.correct ? 'correct' : 'wrong';
+    }
+  } else if (isMulti && !isAnswered && answeredMap[idx] && answeredMap[idx].selected) {
+    isMultiPending = true;
+    statusText = '✏️ 待确认';
+    statusClass = 'pending';
+  } else {
+    statusText = '⏳ 未答';
+    statusClass = 'pending';
+  }
+
+  // For multi select, determine selected keys
+  let selectedKeys = [];
+  if (isMulti && answeredMap[idx]) {
+    selectedKeys = answeredMap[idx].selected ? answeredMap[idx].selected.split('') : [];
+  }
+
+  let html = `
+    <div class="question-card">
+      <div class="q-header">
+        <span class="q-number">#${q.num}</span>
+        <span class="q-type ${typeClass}">${q.type}</span>
+        <span class="q-status ${statusClass}">${statusText}</span>
+      </div>
+      <div class="q-text">${escapeHtml(q.question)}</div>
+      <div class="options" data-idx="${idx}">
+  `;
+
+  const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const wasRevealed = isAnswered && result && !result.revealed;
+  const isRevealedMode = isAnswered && result && result.revealed;
+
+  for (const key of letters) {
+    if (!(key in q.options)) continue;
+    const val = q.options[key];
+    if (!val) continue;
+
+    let optClass = '';
+
+    if (wasRevealed) {
+      optClass += ' revealed';
+      const wasSelected = result.selected && result.selected.includes(key);
+      const isCorrectAnswer = q.answer.toUpperCase().includes(key);
+
+      if (wasSelected && isCorrectAnswer) optClass += ' correct-answer';
+      else if (wasSelected && !isCorrectAnswer) optClass += ' wrong-answer';
+      else if (!wasSelected && isCorrectAnswer) optClass += ' correct-answer';
+    } else if (isRevealedMode && q.answer.toUpperCase().includes(key)) {
+      optClass += ' revealed correct-answer';
+    } else if (isMultiPending && selectedKeys.includes(key)) {
+      optClass += ' selected';
+    }
+
+    const letterDisplay = isMulti && !wasRevealed
+      ? (selectedKeys.includes(key) ? '✓' : key)
+      : key;
+
+    html += `
+      <div class="option${optClass}" data-key="${key}" data-idx="${idx}">
+        <span class="letter">${letterDisplay}</span>
+        <span>${escapeHtml(val)}</span>
+      </div>
+    `;
+  }
+
+  html += '</div>';
+
+  // Multi-select confirm button
+  if (isMulti && !wasRevealed) {
+    const hasSelection = selectedKeys.length > 0;
+    html += `
+      <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-success btn-sm" id="confirmMultiBtn" ${!hasSelection ? 'disabled' : ''}>
+          ✅ 确认提交
+        </button>
+        ${hasSelection
+          ? `<span style="font-size:12px;color:var(--text-secondary);">已选 ${selectedKeys.join(', ')}</span>
+             <button class="btn btn-sm" id="clearMultiBtn">清除</button>`
+          : '<span style="font-size:12px;color:var(--text-secondary);">请选择所有正确选项</span>'}
+      </div>
+    `;
+  }
+
+  // Feedback
+  if (isRevealedMode) {
+    html += `
+      <div class="feedback show right">
+        <span class="fb-icon">👁</span>
+        已显示答案：<strong>${q.answer}</strong>
+        <span style="font-size:12px;color:var(--text-secondary);margin-left:8px;">（点击选项可继续作答）</span>
+      </div>
+    `;
+  } else if (wasRevealed) {
+    html += `
+      <div class="feedback show ${result.correct ? 'right' : 'wrong'}">
+        <span class="fb-icon">${result.correct ? '✅' : '❌'}</span>
+        ${result.correct ? '回答正确！' : `回答错误，正确答案是：<strong>${q.answer}</strong>`}
+      </div>
+    `;
+  }
+
+  html += '</div>';
+  area.innerHTML = html;
+
+  // Attach click handlers to options
+  if (isRevealedMode) {
+    // In revealed mode, clicking an option records the real answer
+    area.querySelectorAll('.option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        delete answeredMap[idx];
+        handleAnswer(parseInt(opt.dataset.idx), opt.dataset.key);
+      });
+    });
+  } else if (!wasRevealed) {
+    area.querySelectorAll('.option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        handleAnswer(parseInt(opt.dataset.idx), opt.dataset.key);
+      });
+    });
+    if (isMulti && document.getElementById('confirmMultiBtn')) {
+      document.getElementById('confirmMultiBtn').addEventListener('click', () => {
+        confirmMultiAnswer(idx);
+      });
+      document.getElementById('clearMultiBtn')?.addEventListener('click', () => {
+        delete answeredMap[idx];
+        saveProgress();
+        renderQuestion();
+      });
+    }
+  }
+
+  // Update nav button states
+  document.getElementById('prevBtn').disabled = currentIndex <= 0;
+  document.getElementById('nextBtn').disabled = currentIndex >= qs.length - 1;
+
+  // Scroll to top of card
+  document.querySelector('.question-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Update wrong toggle
+  updateWrongToggle();
+}
+
+function handleAnswer(qIdx, selectedKey) {
+  const q = allQuestions[qIdx];
+  if (!q) return;
+
+  let isCorrect;
+  let selected = selectedKey;
+
+  if (q.type === '多选') {
+    // Multi-select: toggle selection
+    if (!answeredMap[qIdx]) {
+      answeredMap[qIdx] = { selected: '', correct: false };
+    }
+    const current = answeredMap[qIdx];
+    if (current.selected === '?') current.selected = '';
+
+    let keys = current.selected ? current.selected.split('') : [];
+    if (keys.includes(selectedKey)) {
+      keys = keys.filter(k => k !== selectedKey);
+    } else {
+      keys.push(selectedKey);
+      keys.sort();
+    }
+    current.selected = keys.join('');
+    // Don't auto-judge multi-select - user needs to confirm
+    // We'll judge when they click again or a "confirm" action
+    saveProgress();
+    updateStats();
+    renderQuestion();
+    return;
+  }
+
+  const correct = q.answer.toUpperCase() === selectedKey.toUpperCase();
+  answeredMap[qIdx] = { selected: selectedKey, correct };
+
+  if (correct) {
+    wrongSet.delete(qIdx);
+  } else {
+    wrongSet.add(qIdx);
+  }
+
+  saveProgress();
+  updateStats();
+  renderQuestion();
+}
+
+function confirmMultiAnswer(qIdx) {
+  const q = allQuestions[qIdx];
+  if (!q || q.type !== '多选') return;
+  const entry = answeredMap[qIdx];
+  if (!entry || !entry.selected) return;
+
+  const userAns = entry.selected.split('').sort().join('');
+  const correctAns = q.answer.toUpperCase().split('').sort().join('');
+  entry.correct = userAns === correctAns;
+
+  if (entry.correct) {
+    wrongSet.delete(qIdx);
+  } else {
+    wrongSet.add(qIdx);
+  }
+
+  saveProgress();
+  updateStats();
+  renderQuestion();
+}
+
+function showCurrentAnswer() {
+  const area = document.getElementById('questionArea');
+  const qs = currentMode === 'test' ? testQuestions : currentQuestions;
+  if (!qs.length || currentIndex >= qs.length) return;
+
+  const q = qs[currentIndex];
+  const idx = allQuestions.indexOf(q);
+  if (idx in answeredMap) return; // already answered
+
+  // Show the correct answer using revealed flag (not marked wrong)
+  answeredMap[idx] = { selected: 'REVEALED', correct: true, revealed: true };
+  saveProgress();
+  updateStats();
+  renderQuestion();
+}
+
+// ============ Stats ============
+function updateStats() {
+  const total = allQuestions.length;
+  const answered = Object.keys(answeredMap).length;
+  const correct = Object.values(answeredMap).filter(v => v.correct).length;
+  const wrong = answered - correct;
+  const acc = answered > 0 ? Math.round(correct / answered * 100) : 0;
+
+  document.getElementById('totalCount').textContent = total;
+  document.getElementById('answeredCount').textContent = answered;
+  document.getElementById('correctCount').textContent = correct;
+  document.getElementById('wrongCount').textContent = wrong;
+  document.getElementById('accuracy').textContent = acc + '%';
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statAnswered').textContent = answered;
+  document.getElementById('statCorrect').textContent = correct;
+  document.getElementById('statWrong').textContent = wrong;
+
+  // Filter counts
+  const singleCount = allQuestions.filter(q => q.type === '单选').length;
+  const judgeCount = allQuestions.filter(q => q.type === '判断').length;
+  const multiCount = allQuestions.filter(q => q.type === '多选').length;
+
+  updateProgress();
+  updateWrongToggle();
+}
+
+function updateProgress() {
+  const qs = currentMode === 'test' ? testQuestions : currentQuestions;
+  if (!qs.length) { document.getElementById('progressFill').style.width = '0%'; return; }
+  const done = qs.filter(q => allQuestions.indexOf(q) in answeredMap).length;
+  const pct = Math.round(done / qs.length * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function updateWrongToggle() {
+  const btn = document.getElementById('wrongToggleBtn');
+  const badge = document.getElementById('wrongBadge');
+  const count = wrongSet.size;
+  if (count > 0) {
+    btn.style.display = 'block';
+    badge.textContent = count;
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+// ============ Mode switching ============
+function switchMode(mode) {
+  currentMode = mode;
+  currentIndex = 0;
+
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.mode === mode);
+  });
+
+  document.getElementById('browseToolbar').style.display = mode === 'browse' ? 'flex' : 'none';
+  document.getElementById('testConfig').style.display = mode === 'test' ? 'block' : 'none';
+
+  if (mode === 'browse') {
+    applyFilter();
+  } else if (mode === 'test') {
+    testQuestions = [];
+    document.getElementById('questionArea').innerHTML =
+      `<div class="test-config" style="box-shadow:none;padding:0;"><p style="color:var(--text-secondary);text-align:center;padding:40px 0;">设置参数后点击"开始考试"</p></div>`;
+    document.querySelector('.nav-buttons').style.display = 'none';
+  } else if (mode === 'wrong') {
+    // Show wrong questions
+    const wrongQuestions = allQuestions.filter((q, i) => wrongSet.has(i));
+    if (wrongQuestions.length === 0) {
+      document.getElementById('questionArea').innerHTML =
+        `<div class="no-questions">🎉 没有错题！继续保持！</div>`;
+      document.querySelector('.nav-buttons').style.display = 'none';
+      return;
+    }
+    currentQuestions = wrongQuestions;
+    renderQuestion();
+  }
+  updateStats();
+}
+
+// ============ Filter ============
+let currentFilter = 'all';
+
+function applyFilter() {
+  const type = currentFilter;
+  if (type === 'all') {
+    currentQuestions = [...allQuestions];
+  } else {
+    currentQuestions = allQuestions.filter(q => q.type === type);
+  }
+  currentIndex = 0;
+  renderQuestion();
+  updateStats();
+}
+
+// ============ Shuffle ============
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function shuffleQuestions() {
+  shuffleArray(currentQuestions);
+  currentIndex = 0;
+  renderQuestion();
+  updateStats();
+}
+
+// ============ Test mode ============
+function startTest() {
+  const type = document.getElementById('testType').value;
+  let count = parseInt(document.getElementById('testCount').value) || 20;
+
+  let pool = type === 'all' ? [...allQuestions] : allQuestions.filter(q => q.type === type);
+
+  if (pool.length === 0) {
+    alert('没有符合条件的题目');
+    return;
+  }
+
+  count = Math.min(count, pool.length);
+
+  // Shuffle and pick
+  shuffleArray(pool);
+  testQuestions = pool.slice(0, count);
+  currentIndex = 0;
+  switchMode('test');
+  renderQuestion();
+  document.querySelector('.nav-buttons').style.display = 'flex';
+
+  // Update config area to show test info
+  document.getElementById('testConfig').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <div>
+        <strong style="font-size:16px;">📝 考试模式</strong>
+        <span style="color:var(--text-secondary);margin-left:12px;">
+          ${type === 'all' ? '全部' : type} · ${testQuestions.length}题
+        </span>
+      </div>
+      <button class="btn btn-outline btn-sm" id="resetTestBtn">重新设置</button>
+    </div>
+  `;
+  document.getElementById('resetTestBtn').addEventListener('click', () => {
+    resetTestConfig();
+  });
+}
+
+function resetTestConfig() {
+  document.getElementById('testConfig').innerHTML = `
+    <h3>考试模式设置</h3>
+    <div class="form-row">
+      <label>题目类型</label>
+      <select id="testType">
+        <option value="all">全部</option>
+        <option value="单选">单选</option>
+        <option value="判断">判断</option>
+        <option value="多选">多选</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>题目数量</label>
+      <input type="number" id="testCount" value="20" min="1" max="200">
+      <button class="btn btn-success" id="startTestBtn">开始考试</button>
+    </div>
+  `;
+  document.getElementById('startTestBtn').addEventListener('click', startTest);
+  document.getElementById('questionArea').innerHTML =
+    `<div class="no-questions" style="padding:20px 0;">设置参数后点击"开始考试"</div>`;
+  document.querySelector('.nav-buttons').style.display = 'none';
+}
+
+// ============ Utility ============
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ============ Event Bindings ============
+document.addEventListener('DOMContentLoaded', () => {
+  loadQuestions();
+
+  // Mode tabs
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchMode(tab.dataset.mode));
+  });
+
+  // Filter buttons
+  document.querySelectorAll('[data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      applyFilter();
+    });
+  });
+
+  // Navigation
+  document.getElementById('prevBtn').addEventListener('click', () => {
+    const qs = currentMode === 'test' ? testQuestions : currentQuestions;
+    if (currentIndex > 0) currentIndex--;
+    renderQuestion();
+  });
+
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    const qs = currentMode === 'test' ? testQuestions : currentQuestions;
+    if (currentIndex < qs.length - 1) currentIndex++;
+    renderQuestion();
+  });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (e.key === 'ArrowLeft') document.getElementById('prevBtn').click();
+    if (e.key === 'ArrowRight') document.getElementById('nextBtn').click();
+    if (e.key === 'a' || e.key === 'A') {
+      const opt = document.querySelector('.option[data-key="A"]');
+      if (opt && !opt.classList.contains('revealed')) opt.click();
+    }
+    if (e.key === 'b' || e.key === 'B') {
+      const opt = document.querySelector('.option[data-key="B"]');
+      if (opt && !opt.classList.contains('revealed')) opt.click();
+    }
+    if (e.key === 'c' || e.key === 'C') {
+      const opt = document.querySelector('.option[data-key="C"]');
+      if (opt && !opt.classList.contains('revealed')) opt.click();
+    }
+    if (e.key === 'd' || e.key === 'D') {
+      const opt = document.querySelector('.option[data-key="D"]');
+      if (opt && !opt.classList.contains('revealed')) opt.click();
+    }
+  });
+
+  // Shuffle
+  document.getElementById('shuffleBtn').addEventListener('click', shuffleQuestions);
+
+  // Show answer
+  document.getElementById('showAnswerBtn').addEventListener('click', showCurrentAnswer);
+
+  // Start test
+  document.getElementById('startTestBtn').addEventListener('click', startTest);
+
+  // Wrong questions button
+  document.getElementById('wrongBtn').addEventListener('click', () => {
+    switchMode('wrong');
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.mode === 'wrong');
+    });
+    document.getElementById('browseToolbar').style.display = 'none';
+    document.getElementById('testConfig').style.display = 'none';
+  });
+
+  // Reset progress
+  document.getElementById('resetProgressBtn').addEventListener('click', resetProgress);
+
+  // Scroll to top
+  document.getElementById('scrollTop').addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  window.addEventListener('scroll', () => {
+    document.getElementById('scrollTop').classList.toggle('show', window.scrollY > 300);
+  });
+
+  // Reset progress via keyboard: hold Shift + click on header
+  document.querySelector('.app-header h1').addEventListener('click', (e) => {
+    if (e.shiftKey) resetProgress();
+  });
+});
+</script>
+</body>
+</html>
