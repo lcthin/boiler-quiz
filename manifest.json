@@ -1,0 +1,10 @@
+{
+  "name": "锅炉题库刷题系统",
+  "short_name": "锅炉题库",
+  "description": "锅炉操作题库刷题系统，收录2189道题",
+  "start_url": "/quiz_app.html",
+  "display": "standalone",
+  "background_color": "#f0f2f5",
+  "theme_color": "#4f6ef7",
+  "icons": []
+}
