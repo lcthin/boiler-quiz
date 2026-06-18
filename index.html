@@ -588,14 +588,11 @@ function filterByCategory() {
   updateStats();
 }
 
-// Save & restore browsing position
 function savePosition() {
   try {
     localStorage.setItem('quiz_position', JSON.stringify({
       category: currentCategory,
       filter: currentFilter,
-      index: currentIndex,
-      questionNum: currentQuestions.length > 0 ? currentQuestions[currentIndex]?.num : null,
       timestamp: Date.now()
     }));
   } catch(e) {}
@@ -605,28 +602,33 @@ function restorePosition() {
   try {
     const saved = JSON.parse(localStorage.getItem('quiz_position'));
     if (!saved || !saved.category) return false;
-    
     currentCategory = saved.category;
     currentFilter = saved.filter || 'all';
-    
-    // Activate correct category button
-    document.querySelectorAll('[data-cat]').forEach(b => {
-      b.classList.toggle('active', b.dataset.cat === currentCategory);
-    });
-    document.querySelectorAll('[data-filter]').forEach(b => {
-      b.classList.toggle('active', b.dataset.filter === currentFilter);
-    });
-    
+    document.querySelectorAll('[data-cat]').forEach(b =>
+      b.classList.toggle('active', b.dataset.cat === currentCategory));
+    document.querySelectorAll('[data-filter]').forEach(b =>
+      b.classList.toggle('active', b.dataset.filter === currentFilter));
     return true;
   } catch(e) { return false; }
 }
 
+function jumpToNextUnanswered() {
+  for (let i = 0; i < currentQuestions.length; i++) {
+    const idx = allQuestions.indexOf(currentQuestions[i]);
+    if (!(idx in answeredMap)) {
+      currentIndex = i;
+      renderQuestion();
+      updateStats();
+      return;
+    }
+  }
+}
+
 // ============ Init ============
 function initApp() {
-  // Restore last position
-  const hasPosition = restorePosition();
-  if (hasPosition) {
+  if (restorePosition()) {
     filterByCategory();
+    setTimeout(jumpToNextUnanswered, 80);
   }
   // Load saved progress
   loadProgress();
@@ -816,14 +818,12 @@ function renderQuestion() {
       opt.addEventListener('click', () => {
         delete answeredMap[idx];
         handleAnswer(parseInt(opt.dataset.idx), opt.dataset.key);
-            savePosition();
       });
     });
   } else if (!wasRevealed) {
     area.querySelectorAll('.option').forEach(opt => {
       opt.addEventListener('click', () => {
         handleAnswer(parseInt(opt.dataset.idx), opt.dataset.key);
-            savePosition();
       });
     });
     if (isMulti && document.getElementById('confirmMultiBtn')) {
@@ -892,6 +892,18 @@ function handleAnswer(qIdx, selectedKey) {
   saveProgress();
   updateStats();
   renderQuestion();
+  // Auto-advance to next unanswered
+  setTimeout(function() {
+    for (let i = currentIndex + 1; i < currentQuestions.length; i++) {
+      const idx = allQuestions.indexOf(currentQuestions[i]);
+      if (!(idx in answeredMap)) {
+        currentIndex = i;
+        savePosition();
+        renderQuestion();
+        break;
+      }
+    }
+  }, 300);
 }
 
 function confirmMultiAnswer(qIdx) {
@@ -913,6 +925,17 @@ function confirmMultiAnswer(qIdx) {
   saveProgress();
   updateStats();
   renderQuestion();
+  setTimeout(function() {
+    for (let i = currentIndex + 1; i < currentQuestions.length; i++) {
+      const idx = allQuestions.indexOf(currentQuestions[i]);
+      if (!(idx in answeredMap)) {
+        currentIndex = i;
+        savePosition();
+        renderQuestion();
+        break;
+      }
+    }
+  }, 300);
 }
 
 function showCurrentAnswer() {
@@ -1133,6 +1156,7 @@ document.addEventListener('DOMContentLoaded', () => {
       currentCategory = btn.dataset.cat;
       filterByCategory();
       savePosition();
+      jumpToNextUnanswered();
     });
   });
 
@@ -1143,20 +1167,17 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.add('active');
       currentFilter = btn.dataset.filter;
       filterByCategory();
-      savePosition();
     });
   });
 
   // Navigation
   document.getElementById('prevBtn').addEventListener('click', () => {
-    savePosition();
     const qs = currentMode === 'test' ? testQuestions : currentQuestions;
     if (currentIndex > 0) currentIndex--;
     renderQuestion();
   });
 
   document.getElementById('nextBtn').addEventListener('click', () => {
-    savePosition();
     const qs = currentMode === 'test' ? testQuestions : currentQuestions;
     if (currentIndex < qs.length - 1) currentIndex++;
     renderQuestion();
